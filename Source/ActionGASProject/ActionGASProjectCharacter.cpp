@@ -1,6 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ActionGASProjectCharacter.h"
+
+#include "Ability/Componts/AGAbilitySystemComponentBase.h"
+#include "AbilitySystem/AttributeSets/AG_AttributeSetBase.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -49,6 +52,23 @@ AActionGASProjectCharacter::AActionGASProjectCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+	// 初始化能力和属性集
+	AbilitySystemComponent = CreateDefaultSubobject<UAGAbilitySystemComponentBase>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	// 以下是GE网络同步的前提
+	/*
+	* GAS组件网络模式必须是Mixed或Full，才会完整地同步GE在AbilitySystemComponent.h中有EGameplayEffectReplicationMode的定义，
+	* 可以通过UAbilitySystemComponent::SetReplicationMode函数设置组件实例的网络模式。
+	*
+	* 根据以上三种模式的注释可知（minimal gameplay effect info指的是GameplayTag和GameplayCue）
+		Minimal不会完整地同步GE到客户端
+		Mixed只会完整地同步GE到客户端的owner代理（proxy），其它代理是不完整同步
+		Full会完整地同步GE到客户端的所有代理
+	 */
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+	AttributeSet = CreateDefaultSubobject<UAG_AttributeSetBase>(TEXT("AttributeSet"));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -76,6 +96,7 @@ void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &AActionGASProjectCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &AActionGASProjectCharacter::TouchStopped);
 }
+
 
 void AActionGASProjectCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
@@ -126,4 +147,97 @@ void AActionGASProjectCharacter::MoveRight(float Value)
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
 	}
+}
+
+// 实现纯虚函数的 接口
+UAbilitySystemComponent* AActionGASProjectCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+void AActionGASProjectCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	// 只在服务器执行此函数
+	// 初始化 服务器  GAS
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	InitializeAttributes();
+	GiveAbilities();
+	ApplyStartupEffects();
+}
+
+// 授予  ->  能力 GA
+void AActionGASProjectCharacter::GiveAbilities()
+{
+	if (HasAuthority() && AbilitySystemComponent)
+	{
+		for (auto DefaultAbility : DefaultAbilities)
+		{
+			// 授予  ->  能力 GA
+			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultAbility));
+		}
+	}
+}
+
+// 准备应用的GE列表
+void AActionGASProjectCharacter::ApplyStartupEffects()
+{
+	if (GetLocalRole() == ROLE_Authority && DefaultAttributeSet && AttributeSet)
+	{
+		//创建 GE效果上下文 实际就是GE的Params配置
+		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+		//  AddSourceObject()是EffectContext中的一个方法，用于向该效果上下文中添加一个源对象。源对象一般是指需要被处理的目标对象 暂时设置de
+		EffectContext.AddSourceObject(this);
+
+		// 默认的GE列表
+		for (const TSubclassOf<UGameplayEffect> CharacterEffect : DefaultEffects)
+		{
+			// 自己写的。。。。
+			ApplyGameplayEffectToSelf(CharacterEffect, EffectContext);
+		}
+	}
+}
+
+void AActionGASProjectCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	// 初始化 客户端  GAS
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	InitializeAttributes();
+}
+
+// 初始化属性集
+void AActionGASProjectCharacter::InitializeAttributes()
+{
+	if (GetLocalRole() == ROLE_Authority && DefaultAttributeSet && AttributeSet)
+	{
+		//创建 GE效果上下文 实际就是GE的Params配置
+		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+		//  AddSourceObject()是EffectContext中的一个方法，用于向该效果上下文中添加一个源对象。源对象一般是指需要被处理的目标对象 暂时设置de
+		EffectContext.AddSourceObject(this);
+		// 自己写的。。。。
+		ApplyGameplayEffectToSelf(DefaultAttributeSet.Get(), EffectContext);
+	}
+}
+
+bool AActionGASProjectCharacter::ApplyGameplayEffectToSelf(const TSubclassOf<UGameplayEffect> Effect,
+	FGameplayEffectContextHandle InEffectContext)
+{
+	if (!Effect.Get()) return false;
+
+	// The GameplayEffectSpec (GESpec)可以认为是GameplayEffects的实例化
+	// 在应用一个GameplayEffect时，会先从GameplayEffect中创建一个GameplayEffectSpec出来，然后实际上是把GameplayEffectSpec应用给目标
+	// 从GameplayEffects创建GameplayEffectSpecs会用到UAbilitySystemComponent::MakeOutgoingSpec()（BlueprintCallable）。
+	// GameplayEffectSpecs不是必须立即应用。通常是将GameplayEffectSpec传递给由技能创建的子弹，然后当子弹击中目标时将具体的技能效果应用给目标。
+	// 当GameplayEffectSpecs成功被应用后，它会返回一个新的结构体FActiveGameplayEffect
+	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect, 1, InEffectContext);
+
+	if (SpecHandle.IsValid())
+	{
+		// 应用 FGameplayEffect ！Spec！ Handle
+		FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		// 返回应用效果的结果
+		return ActiveGEHandle.WasSuccessfullyApplied();
+	}
+	return false;
 }
