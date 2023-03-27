@@ -6,20 +6,14 @@ public class ActionGASProject : ModuleRules
 {
 	public ActionGASProject(ReadOnlyTargetRules Target) : base(Target)
 	{
-		// PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-		//
-		// PublicDependencyModuleNames.AddRange(new string[]
-		// {
-		// 	"Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay",
-		// 	"GameplayAbilities", 
-		// });
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
 			"Sockets",
-			"GameplayTasks",
 			"AIModule",
+			"Networking",
 			"GameplayAbilities",
-			"Networking"
+			"GameplayTasks",
+			"GameplayTags",
 		});
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
