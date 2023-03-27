@@ -182,7 +182,8 @@ void AActionGASProjectCharacter::GiveAbilities()
 // 准备应用的GE列表
 void AActionGASProjectCharacter::ApplyStartupEffects()
 {
-	if (GetLocalRole() == ROLE_Authority && DefaultAttributeSet && AttributeSet)
+	// if (GetLocalRole() == ROLE_Authority && DefaultAttributeSet && AttributeSet)
+	if (GetLocalRole() == ROLE_Authority)
 	{
 		//创建 GE效果上下文 实际就是GE的Params配置
 		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();

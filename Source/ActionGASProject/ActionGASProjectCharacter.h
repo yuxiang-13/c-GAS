@@ -91,9 +91,9 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 
-	// 属性
+	// 属性 一个GE去初始话默认属性的东西
 	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category = "GAS")
-	TSubclassOf<UAG_AttributeSetBase> DefaultAttributeSet;
+	TSubclassOf<UGameplayEffect> DefaultAttributeSet;
 	// 能力
 	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category = "GAS")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;

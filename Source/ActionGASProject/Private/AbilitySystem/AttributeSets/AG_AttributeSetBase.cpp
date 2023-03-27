@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/AttributeSets/AG_AttributeSetBase.h"
 #include "GameplayEffectExtension.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 //属性变化后（PostGameplayEffectExecute）
@@ -24,7 +25,13 @@ void UAG_AttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCal
 	// 传递GE处理属性范围
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
+		// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-111 - ->>>> %f"), GetHealth()) , true, true, FLinearColor::Red, 10.f);
+		// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-222 - ->>>> %f"), GetMaxHealth()) , true, true, FLinearColor::Red, 10.f);
+		// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-333 - ->>>> %f"), FMath::Clamp(GetHealth(), 0.f, GetMaxHealth())) , true, true, FLinearColor::Red, 10.f);
+
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
+
+		// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-444 - ->>>> %f"), GetHealth()) , true, true, FLinearColor::Red, 10.f);
 	}
 }
 
@@ -42,12 +49,16 @@ void UAG_AttributeSetBase::PreAttributeChange(const FGameplayAttribute& Attribut
 	Super::PreAttributeChange(Attribute, NewValue);
 	if (Attribute == GetHealthAttribute())
 	{
-		NewValue = FMath::Clamp(GetHealth(), 0.f, GetMaxHealth());
+		// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-222 - ->>>> %f"), GetHealth()) , true, true, FLinearColor::Red, 10.f);
+
+		// NewValue = FMath::Clamp(GetHealth(), 0.f, GetMaxHealth());
 	}
 }
 
 void UAG_AttributeSetBase::OnRep_Health(const FGameplayAttributeData& OldHealth)
 {
+	// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-111 - ->>>> %f"), GetHealth()) , true, true, FLinearColor::Red, 10.f);
+
 	// 这是一个辅助宏,位于AttributeSet类提供好的，可在RepNotify函数中使用，以处理客户端将进行预测性修改的属性。
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAG_AttributeSetBase, Health, OldHealth);
 }
