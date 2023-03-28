@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
 #include "AbilitySystemInterface.h"
+#include "ActionGameTypes.h"
 #include "GameFramework/Character.h"
 #include "ActionGASProjectCharacter.generated.h"
 
@@ -12,6 +13,7 @@ class UAGAbilitySystemComponentBase;
 class UAG_AttributeSetBase;
 class UGameplayEffect;
 class UGameplayAbility;
+struct FCharacterData;
 
 UCLASS(config=Game)
 class AActionGASProjectCharacter : public ACharacter, public IAbilitySystemInterface
@@ -27,6 +29,8 @@ class AActionGASProjectCharacter : public ACharacter, public IAbilitySystemInter
 	class UCameraComponent* FollowCamera;
 public:
 	AActionGASProjectCharacter();
+
+	virtual void PostInitializeComponents() override;
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
@@ -75,8 +79,6 @@ public:
 	// 对自己应用GE
 	bool ApplyGameplayEffectToSelf(const TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext);
 protected:
-	// 初始化函数（Attributes,effects,abilities）
-	void InitializeAttributes();
 	// 授予  ->  能力 GA
 	void GiveAbilities();
 	// 准备应用的GE列表
@@ -91,16 +93,6 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 
-	// 属性 一个GE去初始话默认属性的东西
-	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category = "GAS")
-	TSubclassOf<UGameplayEffect> DefaultAttributeSet;
-	// 能力
-	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category = "GAS")
-	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
-	// 效果
-	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category = "GAS")
-	TArray<TSubclassOf<UGameplayEffect>> DefaultEffects;
-
 	// 初始化技能组件 和 属性
 	UPROPERTY(EditDefaultsOnly)
 	UAGAbilitySystemComponentBase* AbilitySystemComponent;
@@ -109,5 +101,27 @@ protected:
 	// 或者在网络传输序列化时，不希望这些字段被记录或传输，这时候我们就可以在这些字段上面加上transient关键字。
 	UPROPERTY(Transient)
 	UAG_AttributeSetBase* AttributeSet;
+public:
+	UFUNCTION(BlueprintCallable)
+	FCharacterData GetCharacterData() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetCharacterData(const FCharacterData& InCharacterData);
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+protected:
+	// 角色数据要开启网络复制
+	UPROPERTY(ReplicatedUsing = OnRep_CharacterData)
+	FCharacterData CharacterData;
+
+	UFUNCTION()
+	void OnRep_CharacterData();
+
+	// 子类去实现的虚方法，方便之后重写此方法修改数据
+	virtual void InitFromCharacterData(const FCharacterData& InCharacterData, bool bFromReplication = false);
+
+	// 数据资产蓝图类
+	UPROPERTY(EditDefaultsOnly)
+	class UCharacterDataAsset* CharacterDataAsset;
 };
 

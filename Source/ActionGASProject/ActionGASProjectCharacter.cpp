@@ -7,9 +7,12 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "DataAssets/CharacterDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Net/UnrealNetwork.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AActionGASProjectCharacter
@@ -69,6 +72,24 @@ AActionGASProjectCharacter::AActionGASProjectCharacter()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	AttributeSet = CreateDefaultSubobject<UAG_AttributeSetBase>(TEXT("AttributeSet"));
+}
+
+
+// 用于在组件初始化后对组件进行一些操作。该函数被定义在Actor类中，它会在Actor及其组件（如静态网格组件、动画组件、声音组件等）完成初始化后立即被调用。
+// 例如，如果我们需要在Actor中的某个组件初始化后对其进行设置、调整或其他操作，我们可以通过实现PostInitializeComponents函数来实现。
+// 这样，在组件初始化完成后，PostInitializeComponents函数会被调用，我们就可以在该函数中对组件进行需要的操作。
+void AActionGASProjectCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	// 这个 客户端服务器都会触发，必要都触发，因为两边都要初始化CharacterData。尤其是第一次初始化，
+	//不能完全依照RPC让客户端等待服务器下发，因为不是同步的东西，很可能服务器下发时候，你客户端还没创建完成
+	// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-0000 - ->>>> %f"), 0.0f) , true, true, FLinearColor::Red, 10.f);
+	// 根据数据资产 初始化 角色数据
+	if (IsValid(CharacterDataAsset))
+	{
+		SetCharacterData(CharacterDataAsset->CharacterData);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -158,10 +179,10 @@ UAbilitySystemComponent* AActionGASProjectCharacter::GetAbilitySystemComponent()
 void AActionGASProjectCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+	
 	// 只在服务器执行此函数
 	// 初始化 服务器  GAS
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-	InitializeAttributes();
 	GiveAbilities();
 	ApplyStartupEffects();
 }
@@ -171,7 +192,8 @@ void AActionGASProjectCharacter::GiveAbilities()
 {
 	if (HasAuthority() && AbilitySystemComponent)
 	{
-		for (auto DefaultAbility : DefaultAbilities)
+		// for (auto DefaultAbility : DefaultAbilities)
+		for (auto DefaultAbility : CharacterData.Abilitys)
 		{
 			// 授予  ->  能力 GA
 			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultAbility));
@@ -191,7 +213,8 @@ void AActionGASProjectCharacter::ApplyStartupEffects()
 		EffectContext.AddSourceObject(this);
 
 		// 默认的GE列表
-		for (const TSubclassOf<UGameplayEffect> CharacterEffect : DefaultEffects)
+		// for (const TSubclassOf<UGameplayEffect> CharacterEffect : DefaultEffects)
+		for (const TSubclassOf<UGameplayEffect> CharacterEffect : CharacterData.Effects)
 		{
 			// 自己写的。。。。
 			ApplyGameplayEffectToSelf(CharacterEffect, EffectContext);
@@ -204,21 +227,6 @@ void AActionGASProjectCharacter::OnRep_PlayerState()
 	Super::OnRep_PlayerState();
 	// 初始化 客户端  GAS
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-	InitializeAttributes();
-}
-
-// 初始化属性集
-void AActionGASProjectCharacter::InitializeAttributes()
-{
-	if (GetLocalRole() == ROLE_Authority && DefaultAttributeSet && AttributeSet)
-	{
-		//创建 GE效果上下文 实际就是GE的Params配置
-		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
-		//  AddSourceObject()是EffectContext中的一个方法，用于向该效果上下文中添加一个源对象。源对象一般是指需要被处理的目标对象 暂时设置de
-		EffectContext.AddSourceObject(this);
-		// 自己写的。。。。
-		ApplyGameplayEffectToSelf(DefaultAttributeSet.Get(), EffectContext);
-	}
 }
 
 bool AActionGASProjectCharacter::ApplyGameplayEffectToSelf(const TSubclassOf<UGameplayEffect> Effect,
@@ -241,4 +249,34 @@ bool AActionGASProjectCharacter::ApplyGameplayEffectToSelf(const TSubclassOf<UGa
 		return ActiveGEHandle.WasSuccessfullyApplied();
 	}
 	return false;
+}
+
+FCharacterData AActionGASProjectCharacter::GetCharacterData() const
+{
+	return CharacterData;
+}
+
+// 服务器去 设置
+void AActionGASProjectCharacter::SetCharacterData(const FCharacterData& InCharacterData)
+{
+	CharacterData = InCharacterData;
+	InitFromCharacterData(CharacterData);
+}
+
+
+void AActionGASProjectCharacter::InitFromCharacterData(const FCharacterData& InCharacterData, bool bFromReplication)
+{
+}
+
+// 客户端接收后 设置
+void AActionGASProjectCharacter::OnRep_CharacterData()
+{
+	InitFromCharacterData(CharacterData, true);
+}
+
+
+void AActionGASProjectCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AActionGASProjectCharacter, CharacterData);
 }
