@@ -5,6 +5,7 @@
 #include "Ability/Componts/AGAbilitySystemComponentBase.h"
 #include "AbilitySystem/AttributeSets/AG_AttributeSetBase.h"
 #include "ActorComponent/AG_CharacterMovementComponent.h"
+#include "ActorComponent/FootstepsComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -76,6 +77,8 @@ AActionGASProjectCharacter::AActionGASProjectCharacter(const FObjectInitializer&
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	AttributeSet = CreateDefaultSubobject<UAG_AttributeSetBase>(TEXT("AttributeSet"));
+
+	FootstepsComponent = CreateDefaultSubobject<UFootstepsComponent>(TEXT("FootstepsComponent"));
 }
 
 
@@ -255,7 +258,7 @@ bool AActionGASProjectCharacter::ApplyGameplayEffectToSelf(const TSubclassOf<UGa
 	return false;
 }
 
-FCharacterData AActionGASProjectCharacter::GetCharacterData() const
+const FCharacterData& AActionGASProjectCharacter::GetCharacterData()
 {
 	return CharacterData;
 }
@@ -283,4 +286,9 @@ void AActionGASProjectCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AActionGASProjectCharacter, CharacterData);
+}
+
+UFootstepsComponent* AActionGASProjectCharacter::GetFootstepsComponent()
+{
+	return FootstepsComponent;
 }

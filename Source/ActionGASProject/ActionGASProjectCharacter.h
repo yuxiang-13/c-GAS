@@ -104,12 +104,15 @@ protected:
 	UAG_AttributeSetBase* AttributeSet;
 public:
 	UFUNCTION(BlueprintCallable)
-	FCharacterData GetCharacterData() const;
+	const FCharacterData& GetCharacterData();
 
 	UFUNCTION(BlueprintCallable)
 	void SetCharacterData(const FCharacterData& InCharacterData);
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
+	// 返回脚步组件
+	class UFootstepsComponent* GetFootstepsComponent();
 protected:
 	// 角色数据要开启网络复制
 	UPROPERTY(ReplicatedUsing = OnRep_CharacterData)
@@ -124,5 +127,9 @@ protected:
 	// 数据资产蓝图类
 	UPROPERTY(EditDefaultsOnly)
 	class UCharacterDataAsset* CharacterDataAsset;
+
+	// 脚步声组件
+	UPROPERTY(BlueprintReadOnly)
+	class UFootstepsComponent* FootstepsComponent;
 };
 
