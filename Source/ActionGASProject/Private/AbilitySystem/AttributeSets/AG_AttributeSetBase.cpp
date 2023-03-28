@@ -3,6 +3,8 @@
 
 #include "AbilitySystem/AttributeSets/AG_AttributeSetBase.h"
 #include "GameplayEffectExtension.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 
@@ -32,6 +34,17 @@ void UAG_AttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCal
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
 
 		// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-444 - ->>>> %f"), GetHealth()) , true, true, FLinearColor::Red, 10.f);
+	} else if (Data.EvaluatedData.Attribute == GetMaxMovementSpeedAttribute())
+	{
+		if (ACharacter* OwningCharacter = Cast<ACharacter>(GetOwningActor()))
+		{
+			if (UCharacterMovementComponent* CharacterMovement = OwningCharacter->GetCharacterMovement())
+			{
+				// 获取最大速度
+				const float MaxSpeed = GetMaxMovementSpeed();
+				CharacterMovement->MaxWalkSpeed = MaxSpeed;
+			}
+		}
 	}
 }
 
@@ -69,6 +82,24 @@ void UAG_AttributeSetBase::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxH
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAG_AttributeSetBase, MaxHealth, OldMaxHealth);
 }
 
+void UAG_AttributeSetBase::OnRep_Stamina(const FGameplayAttributeData& OldStamina)
+{
+	// 这是一个辅助宏,位于AttributeSet类提供好的，可在RepNotify函数中使用，以处理客户端将进行预测性修改的属性。
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAG_AttributeSetBase, Stamina, OldStamina);
+}
+
+void UAG_AttributeSetBase::OnRep_MaxStamina(const FGameplayAttributeData& OldMaxStamina)
+{
+	// 这是一个辅助宏,位于AttributeSet类提供好的，可在RepNotify函数中使用，以处理客户端将进行预测性修改的属性。
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAG_AttributeSetBase, MaxStamina, OldMaxStamina);
+}
+
+void UAG_AttributeSetBase::OnRep_MaxMovementSpeed(const FGameplayAttributeData& OldMaxMovementSpeed)
+{
+	// 这是一个辅助宏,位于AttributeSet类提供好的，可在RepNotify函数中使用，以处理客户端将进行预测性修改的属性。
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAG_AttributeSetBase, MaxMovementSpeed, OldMaxMovementSpeed);
+}
+
 void UAG_AttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -80,4 +111,8 @@ void UAG_AttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	// 如果某个Attribute不需要复制，类似Meta Attribute，那么OnRep和GetLifetimeReplicatedProps这两步的设置是可以跳过的。
 	DOREPLIFETIME_CONDITION_NOTIFY(UAG_AttributeSetBase, Health, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UAG_AttributeSetBase, MaxHealth, COND_None, REPNOTIFY_Always);
+	
+	DOREPLIFETIME_CONDITION_NOTIFY(UAG_AttributeSetBase, Stamina, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UAG_AttributeSetBase, MaxStamina, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UAG_AttributeSetBase, MaxMovementSpeed, COND_None, REPNOTIFY_Always);
 }

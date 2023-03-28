@@ -4,6 +4,7 @@
 
 #include "Ability/Componts/AGAbilitySystemComponentBase.h"
 #include "AbilitySystem/AttributeSets/AG_AttributeSetBase.h"
+#include "ActorComponent/AG_CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -17,8 +18,11 @@
 //////////////////////////////////////////////////////////////////////////
 // AActionGASProjectCharacter
 
-AActionGASProjectCharacter::AActionGASProjectCharacter()
+AActionGASProjectCharacter::AActionGASProjectCharacter(const FObjectInitializer& ObjectInitializer)
+	// 用我们自定义的移动组件 替换 默认的移动组件
+	:Super(ObjectInitializer.SetDefaultSubobjectClass<UAG_CharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
+	
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 

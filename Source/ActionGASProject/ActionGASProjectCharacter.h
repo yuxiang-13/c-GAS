@@ -28,7 +28,8 @@ class AActionGASProjectCharacter : public ACharacter, public IAbilitySystemInter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
 public:
-	AActionGASProjectCharacter();
+	// AActionGASProjectCharacter();
+	AActionGASProjectCharacter(const FObjectInitializer& ObjectInitializer);
 
 	virtual void PostInitializeComponents() override;
 	
