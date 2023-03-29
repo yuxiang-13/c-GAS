@@ -107,28 +107,9 @@ void AActionGASProjectCharacter::PostInitializeComponents()
 
 void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
-	/*
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
-	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AActionGASProjectCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("Move Right / Left", this, &AActionGASProjectCharacter::MoveRight);
-
-	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
-	// "turn" handles devices that provide an absolute delta, such as a mouse.
-	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn Right / Left Mouse", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &AActionGASProjectCharacter::TurnAtRate);
-	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &AActionGASProjectCharacter::LookUpAtRate);
-
-	// handle touch devices
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &AActionGASProjectCharacter::TouchStarted);
-	PlayerInputComponent->BindTouch(IE_Released, this, &AActionGASProjectCharacter::TouchStopped);
-	*/
-
+	
 	if (UEnhancedInputComponent * PlayerEnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		if (MoveForwardInputAction)
@@ -149,39 +130,10 @@ void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent
 		}
 		if (JumpInputAction)
 		{
-			PlayerEnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnJumpAction);
+			PlayerEnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnJumpActionStart);
+			PlayerEnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Completed, this, &AActionGASProjectCharacter::OnJumpActionEnded);
 		}
 	}
-}
-
-
-void AActionGASProjectCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
-{
-	Jump();
-}
-
-void AActionGASProjectCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
-{
-	StopJumping();
-}
-
-void AActionGASProjectCharacter::TurnAtRate(float Rate)
-{
-}
-
-void AActionGASProjectCharacter::LookUpAtRate(float Rate)
-{
-	// calculate delta for this frame from the rate information
-}
-
-void AActionGASProjectCharacter::MoveForward(float Value)
-{
-	
-}
-
-void AActionGASProjectCharacter::MoveRight(float Value)
-{
-	
 }
 
 // 实现纯虚函数的 接口
@@ -349,9 +301,14 @@ void AActionGASProjectCharacter::OnLookUpAction(const FInputActionValue& Value)
 {
 	AddControllerPitchInput(Value.GetMagnitude() * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
-void AActionGASProjectCharacter::OnJumpAction(const FInputActionValue& Value)
+void AActionGASProjectCharacter::OnJumpActionStart(const FInputActionValue& Value)
 {
 	Jump();
+}
+
+void AActionGASProjectCharacter::OnJumpActionEnded(const FInputActionValue& Value)
+{
+	StopJumping();
 }
 
 
