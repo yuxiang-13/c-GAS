@@ -6,9 +6,9 @@
 #include "ActionGASProject/ActionGASProjectCharacter.h"
 #include "ActorComponent/FootstepsComponent.h"
 
-void UAnimNotify_Step::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UAnimNotify_Step::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
-	Super::Notify(MeshComp, Animation);
+	Super::Notify(MeshComp, Animation, EventReference);
 
 	check(MeshComp);
 

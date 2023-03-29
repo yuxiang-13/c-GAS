@@ -27,6 +27,7 @@ public class ActionGASProject : ModuleRules
 			"NavigationSystem", 
 			"CommonInput", 
 			"ChaosVehicles",
+			"EnhancedInput"
 		});
 	}
 }

@@ -46,8 +46,7 @@ void UFootstepsComponent::HandleFootstep(EFoot Foot)
 	if (AActionGASProjectCharacter* Character =Cast<AActionGASProjectCharacter>(GetOwner()))
 	{
 		// Debug
-		const int32 DebugShowFootsteps = CVarShowFootsteps.GetValueOnAnyThread();
-		
+		int32 DebugShowFootsteps = CVarShowFootsteps.GetValueOnAnyThread();
 		
 		if (USkeletalMeshComponent* Mesh = Character->GetMesh())
 		{
@@ -118,3 +117,4 @@ void UFootstepsComponent::HandleFootstep(EFoot Foot)
 		}
 	}
 }
+

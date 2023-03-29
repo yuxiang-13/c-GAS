@@ -30,5 +30,5 @@ protected:
 	FName RightFootSocketName = TEXT("foot_r_Socket");
 public:
 	void HandleFootstep(EFoot Foot);
-	
+
 };

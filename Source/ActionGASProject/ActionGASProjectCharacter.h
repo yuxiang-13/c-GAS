@@ -7,13 +7,19 @@
 #include "AbilitySystemInterface.h"
 #include "ActionGameTypes.h"
 #include "GameFramework/Character.h"
+
 #include "ActionGASProjectCharacter.generated.h"
 
+class UInputAction;
+class UInputMappingContext;
+struct FInputActionValue;
+// class UInputAction;
 class UAGAbilitySystemComponentBase;
 class UAG_AttributeSetBase;
 class UGameplayEffect;
 class UGameplayAbility;
 struct FCharacterData;
+// class UInputMappingContext;
 
 UCLASS(config=Game)
 class AActionGASProjectCharacter : public ACharacter, public IAbilitySystemInterface
@@ -79,6 +85,8 @@ public:
 public:
 	// 对自己应用GE
 	bool ApplyGameplayEffectToSelf(const TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext);
+public:
+	virtual void PawnClientRestart() override;
 protected:
 	// 授予  ->  能力 GA
 	void GiveAbilities();
@@ -113,6 +121,8 @@ public:
 
 	// 返回脚步组件
 	class UFootstepsComponent* GetFootstepsComponent();
+
+	
 protected:
 	// 角色数据要开启网络复制
 	UPROPERTY(ReplicatedUsing = OnRep_CharacterData)
@@ -131,5 +141,29 @@ protected:
 	// 脚步声组件
 	UPROPERTY(BlueprintReadOnly)
 	class UFootstepsComponent* FootstepsComponent;
+
+	// EnhancedInput
+protected:
+	// 增强输入的上下文
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="EnhancedInput")
+	UInputMappingContext* DefaultMappingContext;
+
+	UPROPERTY(EditDefaultsOnly)
+	UInputAction* MoveForwardInputAction;
+	UPROPERTY(EditDefaultsOnly)
+	UInputAction* MoveRightInputAction;
+	UPROPERTY(EditDefaultsOnly)
+	UInputAction* TurnInputAction;
+	UPROPERTY(EditDefaultsOnly)
+	UInputAction* LookUpInputAction;
+	
+	UPROPERTY(EditDefaultsOnly)
+	UInputAction* JumpInputAction;
+
+	void OnMoveForwardAction(const FInputActionValue& Value);
+	void OnMoveRightAction(const FInputActionValue& Value);
+	void OnTurnAction(const FInputActionValue& Value);
+	void OnLookUpAction(const FInputActionValue& Value);
+	void OnJumpAction(const FInputActionValue& Value);
 };
 

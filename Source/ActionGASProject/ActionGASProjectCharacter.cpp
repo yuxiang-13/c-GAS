@@ -2,6 +2,9 @@
 
 #include "ActionGASProjectCharacter.h"
 
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputTriggers.h"
 #include "Ability/Componts/AGAbilitySystemComponentBase.h"
 #include "AbilitySystem/AttributeSets/AG_AttributeSetBase.h"
 #include "ActorComponent/AG_CharacterMovementComponent.h"
@@ -104,6 +107,7 @@ void AActionGASProjectCharacter::PostInitializeComponents()
 
 void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
+	/*
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
@@ -123,6 +127,31 @@ void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent
 	// handle touch devices
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &AActionGASProjectCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &AActionGASProjectCharacter::TouchStopped);
+	*/
+
+	if (UEnhancedInputComponent * PlayerEnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		if (MoveForwardInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(MoveForwardInputAction, ETriggerEvent::Triggered, this, &AActionGASProjectCharacter::OnMoveForwardAction);
+		}
+		if (MoveRightInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(MoveRightInputAction, ETriggerEvent::Triggered, this, &AActionGASProjectCharacter::OnMoveRightAction);
+		}
+		if (TurnInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(TurnInputAction, ETriggerEvent::Triggered, this, &AActionGASProjectCharacter::OnTurnAction);
+		}
+		if (LookUpInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(LookUpInputAction, ETriggerEvent::Triggered, this, &AActionGASProjectCharacter::OnLookUpAction);
+		}
+		if (JumpInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnJumpAction);
+		}
+	}
 }
 
 
@@ -138,43 +167,21 @@ void AActionGASProjectCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVe
 
 void AActionGASProjectCharacter::TurnAtRate(float Rate)
 {
-	// calculate delta for this frame from the rate information
-	AddControllerYawInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
 void AActionGASProjectCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
-	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
 void AActionGASProjectCharacter::MoveForward(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f))
-	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
-	}
+	
 }
 
 void AActionGASProjectCharacter::MoveRight(float Value)
 {
-	if ( (Controller != nullptr) && (Value != 0.0f) )
-	{
-		// find out which way is right
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
 	
-		// get right vector 
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// add movement in that direction
-		AddMovementInput(Direction, Value);
-	}
 }
 
 // 实现纯虚函数的 接口
@@ -281,6 +288,74 @@ void AActionGASProjectCharacter::OnRep_CharacterData()
 	InitFromCharacterData(CharacterData, true);
 }
 
+UFootstepsComponent* AActionGASProjectCharacter::GetFootstepsComponent()
+{
+	return FootstepsComponent;
+}
+
+
+// 客户端重启  绑定上下文
+void AActionGASProjectCharacter::PawnClientRestart()
+{
+	Super::PawnClientRestart();
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		// 增强输入子系统
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		{
+			Subsystem->ClearAllMappings();
+			// 设置输入上下文以及优先级
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		}
+	}
+}
+
+
+void AActionGASProjectCharacter::OnMoveForwardAction(const FInputActionValue& Value)
+{
+	const float Magnitude = Value.GetMagnitude();
+	if ((Controller != nullptr) && (Magnitude != 0.0f))
+	{
+		// find out which way is forward
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		// get forward vector
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(Direction, Magnitude);
+	}
+}
+void AActionGASProjectCharacter::OnMoveRightAction(const FInputActionValue& Value)
+{
+	const float Magnitude = Value.GetMagnitude();
+	if ( (Controller != nullptr) && (Magnitude != 0.0f) )
+	{
+		// find out which way is right
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+	
+		// get right vector 
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		// add movement in that direction
+		AddMovementInput(Direction, Magnitude);
+	}
+}
+void AActionGASProjectCharacter::OnTurnAction(const FInputActionValue& Value)
+{
+	// calculate delta for this frame from the rate information
+	AddControllerYawInput(Value.GetMagnitude() * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
+}
+void AActionGASProjectCharacter::OnLookUpAction(const FInputActionValue& Value)
+{
+	AddControllerPitchInput(Value.GetMagnitude() * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
+}
+void AActionGASProjectCharacter::OnJumpAction(const FInputActionValue& Value)
+{
+	Jump();
+}
+
+
+
 
 void AActionGASProjectCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -288,7 +363,4 @@ void AActionGASProjectCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(AActionGASProjectCharacter, CharacterData);
 }
 
-UFootstepsComponent* AActionGASProjectCharacter::GetFootstepsComponent()
-{
-	return FootstepsComponent;
-}
+
