@@ -2,6 +2,7 @@
 
 #include "ActionGASProjectCharacter.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputTriggers.h"
@@ -301,9 +302,17 @@ void AActionGASProjectCharacter::OnLookUpAction(const FInputActionValue& Value)
 {
 	AddControllerPitchInput(Value.GetMagnitude() * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
+
 void AActionGASProjectCharacter::OnJumpActionStart(const FInputActionValue& Value)
 {
-	Jump();
+	// Jump();
+	// 通过事件 触发Jump
+	FGameplayEventData PayLoad;
+	PayLoad.Instigator = this;
+	PayLoad.EventTag = JumpEVentTag;
+
+	// 触发EventTag
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, JumpEVentTag, PayLoad);
 }
 
 void AActionGASProjectCharacter::OnJumpActionEnded(const FInputActionValue& Value)
@@ -311,7 +320,15 @@ void AActionGASProjectCharacter::OnJumpActionEnded(const FInputActionValue& Valu
 	StopJumping();
 }
 
-
+void AActionGASProjectCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+	if (AbilitySystemComponent)
+	{
+		// 根据InAirTags容器列表中每个Tag，移除对应的GE
+		AbilitySystemComponent->RemoveActiveEffectsWithTags(InAirTags);
+	}
+}
 
 
 void AActionGASProjectCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

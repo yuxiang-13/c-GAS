@@ -140,5 +140,19 @@ protected:
 	void OnLookUpAction(const FInputActionValue& Value);
 	void OnJumpActionStart(const FInputActionValue& Value);
 	void OnJumpActionEnded(const FInputActionValue& Value);
+
+
+	// 重写 着陆的 命中事件  降落时调用，根据命中结果执行操作。触发OnLanded事件
+	virtual void Landed(const FHitResult& Hit) override;
+	
+protected:
+	//用于触发 Gameplay Event 的 Tags 
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag JumpEVentTag;
+	
+	// Gameplay Tags容器
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTagContainer InAirTags;
+	
 };
 
