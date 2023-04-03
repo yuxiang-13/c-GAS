@@ -35,20 +35,19 @@ UGA_Jump::UGA_Jump()
 	//1 InstancingPolicy 表示Gameplay Ability实例化策略的枚举值
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::NonInstanced;
 	/*
-	*enum Type
-	{
-		// 表示 Gameplay Ability 使用已经存在的 Ability 实例。相当于将所有使用该 Ability 的对象共享同一个 Ability 实例。
-		// 适用于那些不需要创建新实例的特定 Ability。由于不需要创建新实例，可以减少计算和资源开销
-		NonInstanced,
-
-		// 表示每个 Actor 创建一个新的 Ability 实例。适用于每个 Actor 运行自己的实例的情况，例如一些身体动作或类似玩家控制的操作。
-		InstancedPerActor,
-
-		// 表示每次执行 Ability 都创建一个新的 Ability 实例。适用于那些多个 Actor 运行不同实例的 Ability 类，
-		例如施法者对多个目标进行施法，每个目标都需要一个新的 Ability 实例。
-		InstancedPerExecution,
-	};
-	 * 
+		*enum Type
+		{
+			// 表示 Gameplay Ability 使用已经存在的 Ability 实例。相当于将所有使用该 Ability 的对象共享同一个 Ability 实例。
+			// 适用于那些不需要创建新实例的特定 Ability。由于不需要创建新实例，可以减少计算和资源开销
+			NonInstanced,
+	
+			// 表示每个 Actor 创建一个新的 Ability 实例。适用于每个 Actor 运行自己的实例的情况，例如一些身体动作或类似玩家控制的操作。
+			InstancedPerActor,
+	
+			// 表示每次执行 Ability 都创建一个新的 Ability 实例。适用于那些多个 Actor 运行不同实例的 Ability 类，
+			例如施法者对多个目标进行施法，每个目标都需要一个新的 Ability 实例。
+			InstancedPerExecution,
+		};
 	 */
 }
 
@@ -93,49 +92,10 @@ void UGA_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 		{
 			return;
 		}
+		// 执行基类中的方法，就可以把下面的 GE生效代码删除了
+		Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 		AActionGASProjectCharacter * Character = CastChecked<AActionGASProjectCharacter>(ActorInfo->AvatarActor.Get());
 		Character->Jump();
-
-		// 服务器去 触发GE啊
-		// if (Character->GetLocalRole() == ROLE_Authority)
-		{
-			if (UAbilitySystemComponent* AbilityComponent = Character->GetAbilitySystemComponent())
-			{
-				// 执行Gameplay Effect + 创建一个新的EffectContext对象，并返回其句柄
-				FGameplayEffectContextHandle EffectContextHandle = AbilityComponent->MakeEffectContext();
-				// 添加 原目标
-				EffectContextHandle.AddSourceObject(Character);
-
-				
-				// 1 The GameplayEffectSpec (GESpec)可以认为是GameplayEffects的实例化
-				// 在应用一个GameplayEffect时，会先从GameplayEffect中创建一个GameplayEffectSpec出来，然后实际上是把GameplayEffectSpec应用给目标
-				// 从GameplayEffects创建GameplayEffectSpecs会用到UAbilitySystemComponent::MakeOutgoingSpec()（BlueprintCallable）。
-   
-				// 2 GameplayEffectSpecs不是必须立即应用。通常是将GameplayEffectSpec传递给由技能创建的子弹，然后当子弹击中目标时将具体的技能效果应用给目标。
-				// 当GameplayEffectSpecs成功被应用后，它会返回一个新的结构体FActiveGameplayEffect
-
-				
-				
-				FGameplayEffectSpecHandle SpecHandle = AbilityComponent->MakeOutgoingSpec(JumpEffect, 1 , EffectContextHandle);
-				if (SpecHandle.IsValid())
-				{
-					// 把效果应用给自己 (注意，函数名内有这个   Spec  的)
-					// FActiveGameplayEffectHandle ActiveGEHandle = AbilityComponent->ApplyGameplayEffect   Spec  ToSelf(*SpecHandle.Data.Get());
-					// FActiveGameplayEffectHandle ActiveGEHandle = AbilityComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-
-					FActiveGameplayEffectHandle ActiveGEHandle = AbilityComponent->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), AbilityComponent);
-				
-					// 如果没成功 添加一条消息打印
-					if (!ActiveGEHandle.WasSuccessfullyApplied())
-					{
-						UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT(" Failed to apply jump effect! %s"), * GetNameSafe(Character)) , true, true, FLinearColor::Red, 10.f);
-					} else
-					{
-						UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT(" Success to apply jump effect! %s"), * GetNameSafe(Character)) , true, true, FLinearColor::Red, 10.f);
-					}
-				}
-			}
-		}
 	}
 }

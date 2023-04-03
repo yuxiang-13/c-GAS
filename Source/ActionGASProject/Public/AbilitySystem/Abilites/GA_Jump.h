@@ -21,9 +21,9 @@ public:
 
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
-protected:
-
-	// 比如跳跃时候减血
-	UPROPERTY(EditDefaultsOnly, Category="Effects")
-	TSubclassOf<class UGameplayEffect> JumpEffect;
+// protected:
+//
+// 	// 比如跳跃时候减血
+// 	UPROPERTY(EditDefaultsOnly, Category="Effects")
+// 	TSubclassOf<class UGameplayEffect> JumpEffect;
 };
