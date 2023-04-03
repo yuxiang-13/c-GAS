@@ -25,6 +25,15 @@ protected:
 	class UAnimSequence* GetIdleAnimation() const;
 
 	
+	// 返回 混合空间动画资源
+	UFUNCTION(BlueprintCallable, meta=(BlueprintThreadSafe))
+	class UBlendSpace* GetCrouchLocomotionBlendSpace() const;
+
+	// 返回 蹲伏动画资源
+	UFUNCTION(BlueprintCallable, meta=(BlueprintThreadSafe))
+	class UAnimSequence* GetCrouchAnimation() const;
+	
+	
 	// 提供 默认 动画数据资产
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Animation")
 	class UCharacterAnimDataAsset* DefaultCharacterAnimDataAsset;

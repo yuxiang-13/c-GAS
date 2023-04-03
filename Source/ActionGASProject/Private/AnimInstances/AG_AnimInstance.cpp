@@ -35,3 +35,34 @@ UAnimSequence* UAG_AnimInstance::GetIdleAnimation() const
 
 	return DefaultCharacterAnimDataAsset ? DefaultCharacterAnimDataAsset->CharacterAnimationData.IdleAnimationAsset : nullptr;
 }
+
+
+UBlendSpace* UAG_AnimInstance::GetCrouchLocomotionBlendSpace() const
+{
+	if (AActionGASProjectCharacter* ActionGASProjectCharacte = Cast<AActionGASProjectCharacter>(GetOwningActor()))
+	{
+		FCharacterData Data = ActionGASProjectCharacte->GetCharacterData();
+		// 获取动画数据资产，并返回混合空间
+		if (Data.CharacterAnimDataAsset)
+		{
+			return Data.CharacterAnimDataAsset->CharacterAnimationData.CrouchMovementBlendspace;
+		}
+	}
+
+	return DefaultCharacterAnimDataAsset ? DefaultCharacterAnimDataAsset->CharacterAnimationData.CrouchMovementBlendspace : nullptr;
+}
+
+UAnimSequence* UAG_AnimInstance::GetCrouchAnimation() const
+{
+	if (AActionGASProjectCharacter* ActionGASProjectCharacte = Cast<AActionGASProjectCharacter>(GetOwningActor()))
+	{
+		FCharacterData Data = ActionGASProjectCharacte->GetCharacterData();
+		// 获取动画数据资产，并返回混合空间
+		if (Data.CharacterAnimDataAsset)
+		{
+			return Data.CharacterAnimDataAsset->CharacterAnimationData.CrouchAnimationAsset;
+		}
+	}
+
+	return DefaultCharacterAnimDataAsset ? DefaultCharacterAnimDataAsset->CharacterAnimationData.CrouchAnimationAsset : nullptr;
+}

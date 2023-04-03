@@ -3,6 +3,7 @@
 #include "ActionGASProjectCharacter.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemLog.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputTriggers.h"
@@ -133,6 +134,13 @@ void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent
 		{
 			PlayerEnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnJumpActionStart);
 			PlayerEnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Completed, this, &AActionGASProjectCharacter::OnJumpActionEnded);
+		}
+
+		// 绑定蹲伏
+		if (CrouchInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(CrouchInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnCrouchActionStart);
+			PlayerEnhancedInputComponent->BindAction(CrouchInputAction, ETriggerEvent::Completed, this, &AActionGASProjectCharacter::OnCrouchActionEnded);
 		}
 	}
 }
@@ -320,6 +328,24 @@ void AActionGASProjectCharacter::OnJumpActionEnded(const FInputActionValue& Valu
 	StopJumping();
 }
 
+void AActionGASProjectCharacter::OnCrouchActionStart(const FInputActionValue& Value)
+{
+	if (AbilitySystemComponent)
+	{
+		//1 用于主动激活与指定标签(Tag)匹配的技能。
+		//2 如果bAllowRemoteActivation为true，它将远程激活本地/服务器功能，如果为false，它将仅尝试本地激活功能。
+		AbilitySystemComponent->TryActivateAbilitiesByTag(CrouchTags, true);
+	}
+}
+
+void AActionGASProjectCharacter::OnCrouchActionEnded(const FInputActionValue& Value)
+{
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->CancelAbilities(&CrouchTags);
+	}
+}
+
 void AActionGASProjectCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
@@ -328,6 +354,45 @@ void AActionGASProjectCharacter::Landed(const FHitResult& Hit)
 		// 根据InAirTags容器列表中每个Tag，移除对应的GE
 		AbilitySystemComponent->RemoveActiveEffectsWithTags(InAirTags);
 	}
+}
+
+void AActionGASProjectCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	// 检查是否有效
+	if (!CrouchStateEffect.Get()) return;
+
+	if (AbilitySystemComponent)
+	{
+		// 创建GE内容句柄
+		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+		
+		// GE实例化
+		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(CrouchStateEffect, 1, EffectContext);
+		if (SpecHandle.IsValid())
+		{
+			//激活 GE Spec实例 也就 获得了这个 FActiveGameplayEffectHandle
+			FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+
+			// 如果没成功 添加一条消息打印
+			if (!ActiveGEHandle.WasSuccessfullyApplied())
+			{
+				ABILITY_LOG(Log, TEXT("Ability %s Failed to apply Crouch Effect %s"), *GetName(), *GetNameSafe(CrouchStateEffect));
+				// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT(" Failed to apply jump effect! %s"), * GetNameSafe(Character)) , true, true, FLinearColor::Red, 10.f);
+			}
+		}
+	}
+}
+
+void AActionGASProjectCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	if (AbilitySystemComponent && CrouchStateEffect.Get())
+	{
+		// 通过GE源文件 删除GE
+		AbilitySystemComponent->RemoveActiveGameplayEffectBySourceEffect(CrouchStateEffect, AbilitySystemComponent);
+	}
+	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	
 }
 
 

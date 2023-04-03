@@ -133,6 +133,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly)
 	UInputAction* JumpInputAction;
+	
+	UPROPERTY(EditDefaultsOnly)
+	UInputAction* CrouchInputAction;
 
 	void OnMoveForwardAction(const FInputActionValue& Value);
 	void OnMoveRightAction(const FInputActionValue& Value);
@@ -141,10 +144,16 @@ protected:
 	void OnJumpActionStart(const FInputActionValue& Value);
 	void OnJumpActionEnded(const FInputActionValue& Value);
 
+	// 下蹲
+	void OnCrouchActionStart(const FInputActionValue& Value);
+	void OnCrouchActionEnded(const FInputActionValue& Value);
 
 	// 重写 着陆的 命中事件  降落时调用，根据命中结果执行操作。触发OnLanded事件
 	virtual void Landed(const FHitResult& Hit) override;
-	
+
+	// 覆盖 开始下蹲 下蹲结束
+	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
 protected:
 	//用于触发 Gameplay Event 的 Tags 
 	UPROPERTY(EditDefaultsOnly)
@@ -154,5 +163,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTagContainer InAirTags;
 	
+	// Gameplay Tags容器
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTagContainer CrouchTags;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UGameplayEffect> CrouchStateEffect;
 };
 
