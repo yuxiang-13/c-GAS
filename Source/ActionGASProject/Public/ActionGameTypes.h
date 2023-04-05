@@ -100,3 +100,23 @@ struct FMotionWarpingTargetByLocationAndRotation
 	UPROPERTY()
 	FRotator Rotation;
 };
+
+
+// BlueprintType是用于声明C++的结构体、枚举、类等是允许在蓝图（Blueprint）中使用的。
+// 具有BlueprintType修饰符的C++类型可以在蓝图中使用，并且可以直接在蓝图中实例化使用。
+// 
+//Blueprintable是用于声明C++的类是允许在蓝图中派生的。
+//如果一个C++类使用了Blueprintable修饰符，那么该类可以被蓝图继承，并且可以在蓝图中创建和实例化对象。
+// 项目静态数据
+UCLASS(BlueprintType, Blueprintable)
+class UItemStaticData : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	// 通用参数
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName Name;
+	
+};
+
