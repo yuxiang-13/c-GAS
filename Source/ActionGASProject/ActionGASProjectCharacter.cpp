@@ -99,6 +99,13 @@ AActionGASProjectCharacter::AActionGASProjectCharacter(const FObjectInitializer&
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &AActionGASProjectCharacter::OnMaxMovementSpeedChanged);
 }
 
+void AActionGASProjectCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	
+}
+
 
 // 用于在组件初始化后对组件进行一些操作。该函数被定义在Actor类中，它会在Actor及其组件（如静态网格组件、动画组件、声音组件等）完成初始化后立即被调用。
 // 例如，如果我们需要在Actor中的某个组件初始化后对其进行设置、调整或其他操作，我们可以通过实现PostInitializeComponents函数来实现。
@@ -125,7 +132,7 @@ void AActionGASProjectCharacter::OnMaxMovementSpeedChanged(const FOnAttributeCha
 	// 设置 Attribute属性变化，保持客户端服务器的同步
 	GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
 
-	UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-0000 - ->>>> %f"), 0.0f) , true, true, FLinearColor::Red, 10.f);
+	// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-0000 - ->>>> %f"), 0.0f) , true, true, FLinearColor::Red, 10.f);
 }
 
 void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -346,19 +353,23 @@ void AActionGASProjectCharacter::OnLookUpAction(const FInputActionValue& Value)
 
 void AActionGASProjectCharacter::OnJumpActionStart(const FInputActionValue& Value)
 {
-	// Jump();
-	// 通过事件 触发Jump
-	FGameplayEventData PayLoad;
-	PayLoad.Instigator = this;
-	PayLoad.EventTag = JumpEVentTag;
+	// // Jump();
+	// // 通过事件 触发Jump
+	// FGameplayEventData PayLoad;
+	// PayLoad.Instigator = this;
+	// PayLoad.EventTag = JumpEVentTag;
+	//
+	// // 触发EventTag
+	// UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, JumpEVentTag, PayLoad);
 
-	// 触发EventTag
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, JumpEVentTag, PayLoad);
+	AGCharacterMovementComponent->TryTraversal(AbilitySystemComponent);
 }
 
 void AActionGASProjectCharacter::OnJumpActionEnded(const FInputActionValue& Value)
 {
-	StopJumping();
+	// StopJumping();
+
+	
 }
 
 void AActionGASProjectCharacter::OnCrouchActionStart(const FInputActionValue& Value)

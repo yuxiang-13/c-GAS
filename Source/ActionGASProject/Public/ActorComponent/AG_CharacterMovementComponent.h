@@ -21,6 +21,7 @@ public:
 	// Traversal 遍历;树的遍历 踹我搜
 	bool TryTraversal(UAbilitySystemComponent* ASC);
 
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 protected:
 	// 能力列表，就是不同情况下 我们能选择去触发的各种 跳跃能力
 	UPROPERTY(EditDefaultsOnly)

@@ -40,6 +40,7 @@ public:
 	// AActionGASProjectCharacter();
 	AActionGASProjectCharacter(const FObjectInitializer& ObjectInitializer);
 
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void PostInitializeComponents() override;
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;

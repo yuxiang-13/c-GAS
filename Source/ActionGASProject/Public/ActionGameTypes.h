@@ -65,3 +65,38 @@ enum class EFoot: uint8
 };
 
 
+
+
+USTRUCT(BlueprintType)
+struct FMotionWarpingTargetByLocationAndRotation
+{
+	// ue5 GENERATED_BODY 和 GENERATED_USTRUCT_BODY 区别
+	// 需要注意的是，GENERATED_BODY和GENERATED_USTRUCT_BODY宏定义虽然用途不同，但其本质上是相似的。
+	// 它们都是利用了UE5中的反射机制，通过宏定义来自动生成一些代码
+	//GENERATED_BODY宏定义在类声明中使用，可以用于生成类的一些标准方法（例如Construct、Tick、BeginPlay等）
+	//GENERATED_USTRUCT_BODY宏定义在结构体声明中使用，用于生成结构体的元数据和一些标准方法（例如初始化、复制、比较等
+	GENERATED_USTRUCT_BODY()
+
+	FMotionWarpingTargetByLocationAndRotation()
+	{
+		
+	}
+
+	FMotionWarpingTargetByLocationAndRotation(FName InName, FVector InLocation, FRotator InRotation)
+		:Name(InName)
+		,Location(InLocation)
+		,Rotation(InRotation)
+	
+	{
+		
+	}
+
+	UPROPERTY()
+	FName Name;
+
+	UPROPERTY()
+	FVector Location;
+
+	UPROPERTY()
+	FRotator Rotation;
+};

@@ -4,6 +4,7 @@
 #include "ActorComponent//AG_CharacterMovementComponent.h"
 
 #include "AbilitySystemComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 /*
  *TAutoConsoleVariable是一个宏定义，用于创建控制台命令变量
@@ -11,7 +12,7 @@
  * 在运行时，可以通过输入控制台命令（变量名称+变量值）来修改控制台命令变量的值，从而改变游戏参数。
  */
 // 调试Debug
-static TAutoConsoleVariable<int32> CVarShowTraversal(TEXT("ShowTraversal"),
+static TAutoConsoleVariable<int32> CVarShowTraversal(TEXT("ShowDebugTraversal"),
 	0, //控制台命令变量的初始值，默认值为0
 	TEXT("Draws debug info about Traversal/n    0: off/n    1: on/n"), //控制台命令变量的帮助文本，可以为NULL。
 	ECVF_Cheat); //控制台命令变量的标识位，用于指定变量的使用权限。可用标识位包括：可通过配置文件进行修改、只读变量、命令行参数、不使用外部命令行参数等。
@@ -40,4 +41,11 @@ bool UAG_CharacterMovementComponent::TryTraversal(UAbilitySystemComponent* ASC)
 	}
 
 	return false;
+}
+
+void UAG_CharacterMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
 }
