@@ -296,7 +296,7 @@ void UGA_Vault::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGamep
 		
 		CharacterMovement->SetMovementMode(MOVE_Walking);
 		// CharacterMovement->GravityScale = 1.75;
-		UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-MOVE_Walking - ->>>> %f")) , true, true, FLinearColor::Red, 10.f);
+		// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-MOVE_Walking - ->>>> %f")) , true, true, FLinearColor::Red, 10.f);
 
 	}
 	// 恢复碰撞
