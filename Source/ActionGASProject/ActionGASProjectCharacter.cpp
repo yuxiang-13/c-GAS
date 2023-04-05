@@ -10,6 +10,7 @@
 #include "Ability/Componts/AGAbilitySystemComponentBase.h"
 #include "AbilitySystem/AttributeSets/AG_AttributeSetBase.h"
 #include "ActorComponent/AG_CharacterMovementComponent.h"
+#include "ActorComponent/AG_MotionWarpingComponent.h"
 #include "ActorComponent/FootstepsComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -52,6 +53,12 @@ AActionGASProjectCharacter::AActionGASProjectCharacter(const FObjectInitializer&
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
+	
+	// 记录下来
+	AGCharacterMovementComponent = Cast<UAG_CharacterMovementComponent>(GetCharacterMovement());
+	// 创建动作扭曲组件
+	AGMotionWarpingComponent = CreateDefaultSubobject<UAG_MotionWarpingComponent>(TEXT("MotionWarpingComponent"));
+
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -84,6 +91,12 @@ AActionGASProjectCharacter::AActionGASProjectCharacter(const FObjectInitializer&
 	AttributeSet = CreateDefaultSubobject<UAG_AttributeSetBase>(TEXT("AttributeSet"));
 
 	FootstepsComponent = CreateDefaultSubobject<UFootstepsComponent>(TEXT("FootstepsComponent"));
+
+	// 绑定客户端监听属性变化
+	//GetGameplayAttributeValueChangeDelegate 是用于注册属性值发生变化的回调函数（Delegate），当属性值发生变化时，会触发该回调函数。
+	// 客户端和服务器之间需要同步游戏状态，包括属性值的变化。因此，该回调函数在客户端和服务器上都会被响应
+	// 当客户端的属性值发生变化时，客户端会触发该回调函数，并向服务器发送属性值变化的通知。而服务器也会监听该回调函数，并更新游戏状态，然后将状态同步给所有的客户端。
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &AActionGASProjectCharacter::OnMaxMovementSpeedChanged);
 }
 
 
@@ -106,6 +119,14 @@ void AActionGASProjectCharacter::PostInitializeComponents()
 
 //////////////////////////////////////////////////////////////////////////
 // Input
+
+void AActionGASProjectCharacter::OnMaxMovementSpeedChanged(const FOnAttributeChangeData& Data)
+{
+	// 设置 Attribute属性变化，保持客户端服务器的同步
+	GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
+
+	UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-0000 - ->>>> %f"), 0.0f) , true, true, FLinearColor::Red, 10.f);
+}
 
 void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
@@ -141,6 +162,13 @@ void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent
 		{
 			PlayerEnhancedInputComponent->BindAction(CrouchInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnCrouchActionStart);
 			PlayerEnhancedInputComponent->BindAction(CrouchInputAction, ETriggerEvent::Completed, this, &AActionGASProjectCharacter::OnCrouchActionEnded);
+		}
+
+		// 绑定冲刺
+		if (SprintInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(SprintInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnSprintActionStart);
+			PlayerEnhancedInputComponent->BindAction(SprintInputAction, ETriggerEvent::Completed, this, &AActionGASProjectCharacter::OnSprintActionEnded);
 		}
 	}
 }
@@ -254,6 +282,11 @@ UFootstepsComponent* AActionGASProjectCharacter::GetFootstepsComponent()
 	return FootstepsComponent;
 }
 
+UAG_MotionWarpingComponent* AActionGASProjectCharacter::GetAGMotionWarpingComponent() const
+{
+	return AGMotionWarpingComponent;
+}
+
 
 // 客户端重启  绑定上下文
 void AActionGASProjectCharacter::PawnClientRestart()
@@ -343,6 +376,24 @@ void AActionGASProjectCharacter::OnCrouchActionEnded(const FInputActionValue& Va
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->CancelAbilities(&CrouchTags);
+	}
+}
+
+void AActionGASProjectCharacter::OnSprintActionStart(const FInputActionValue& Value)
+{
+	if (AbilitySystemComponent)
+	{
+		//1 用于主动激活与指定标签(Tag)匹配的技能。
+		//2 如果bAllowRemoteActivation为true，它将远程激活本地/服务器功能，如果为false，它将仅尝试本地激活功能。
+		AbilitySystemComponent->TryActivateAbilitiesByTag(SprintTags, true);
+	}
+}
+
+void AActionGASProjectCharacter::OnSprintActionEnded(const FInputActionValue& Value)
+{
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->CancelAbilities(&SprintTags);
 	}
 }
 

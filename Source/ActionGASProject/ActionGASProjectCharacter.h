@@ -21,6 +21,9 @@ class UGameplayAbility;
 struct FCharacterData;
 // class UInputMappingContext;
 
+class UAG_MotionWarpingComponent;
+class UAG_CharacterMovementComponent;
+
 UCLASS(config=Game)
 class AActionGASProjectCharacter : public ACharacter, public IAbilitySystemInterface
 {
@@ -45,6 +48,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Input)
 	float TurnRateGamepad;
 
+	// 绑定 Attribute属性变化
+	void OnMaxMovementSpeedChanged(const FOnAttributeChangeData& Data);
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -84,6 +89,13 @@ protected:
 	// 或者在网络传输序列化时，不希望这些字段被记录或传输，这时候我们就可以在这些字段上面加上transient关键字。
 	UPROPERTY(Transient)
 	UAG_AttributeSetBase* AttributeSet;
+
+	// 运动扭曲组件
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=MotionWarp)
+	UAG_MotionWarpingComponent* AGMotionWarpingComponent;
+
+	// 这个变量 去保存 咱们在默认构造中 强行更改的 运动组件，实际就是记录下来，因为之前只是绑定上，没有做记录
+	UAG_CharacterMovementComponent* AGCharacterMovementComponent;
 public:
 	UFUNCTION(BlueprintCallable)
 	const FCharacterData& GetCharacterData();
@@ -96,7 +108,8 @@ public:
 	// 返回脚步组件
 	class UFootstepsComponent* GetFootstepsComponent();
 
-	
+	// 添加Get
+	UAG_MotionWarpingComponent* GetAGMotionWarpingComponent() const;
 protected:
 	// 角色数据要开启网络复制
 	UPROPERTY(ReplicatedUsing = OnRep_CharacterData)
@@ -137,6 +150,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	UInputAction* CrouchInputAction;
 
+	UPROPERTY(EditDefaultsOnly)
+	UInputAction* SprintInputAction;
+	
 	void OnMoveForwardAction(const FInputActionValue& Value);
 	void OnMoveRightAction(const FInputActionValue& Value);
 	void OnTurnAction(const FInputActionValue& Value);
@@ -147,6 +163,10 @@ protected:
 	// 下蹲
 	void OnCrouchActionStart(const FInputActionValue& Value);
 	void OnCrouchActionEnded(const FInputActionValue& Value);
+
+	// 冲刺
+	void OnSprintActionStart(const FInputActionValue& Value);
+	void OnSprintActionEnded(const FInputActionValue& Value);
 
 	// 重写 着陆的 命中事件  降落时调用，根据命中结果执行操作。触发OnLanded事件
 	virtual void Landed(const FHitResult& Hit) override;
@@ -166,8 +186,16 @@ protected:
 	// Gameplay Tags容器
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTagContainer CrouchTags;
+	
+	// Gameplay Tags容器
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTagContainer SprintTags;
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UGameplayEffect> CrouchStateEffect;
+
+
+protected:
+	FDelegateHandle MaxMovementSpeedChangedDelegateHandle;
 };
 
