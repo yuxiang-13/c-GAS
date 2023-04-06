@@ -12,7 +12,8 @@
 				"Engine",
 				"GameplayAbilities",
 				"PhysicsCore",
-				"MotionWarping"
+				"MotionWarping",
+				"CoreUObject"
 			]
 		}
 	],
