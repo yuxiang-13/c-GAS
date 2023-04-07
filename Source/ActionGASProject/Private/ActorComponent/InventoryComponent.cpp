@@ -61,6 +61,8 @@ void UInventoryComponent::BeginPlay()
 	{
 		EquipItem(InventoryList.GetItemsRef()[0].ItemInstance->ItemStaticDataClass);
 	}
+
+	UnEquipItem();
 }
 
 bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
