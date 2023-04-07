@@ -48,6 +48,18 @@ void UInventoryComponent::InitializeComponent()
 		{
 			InventoryList.AddItem(ItemClass);
 		}
+
+	}
+}
+
+
+void UInventoryComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	// 默认第一个是默认装备的武器
+	if (InventoryList.GetItemsRef().Num())
+	{
+		EquipItem(InventoryList.GetItemsRef()[0].ItemInstance->ItemStaticDataClass);
 	}
 }
 
@@ -88,31 +100,26 @@ void UInventoryComponent::EquipItem(TSubclassOf<UItemStaticData> InItemStaticDat
 	{
 		for (auto Item : InventoryList.GetItemsRef())
 		{
-			// 先给一个加上装备
-			// 直接触发 背包元素的 装戴虚方法
-			Item.ItemInstance->OnEquipped();
-			
-			// *****  2 讲解的 下一步
-			CurrentItem = Item.ItemInstance;
-			break;
+			if (Item.ItemInstance->ItemStaticDataClass == InItemStaticDataClass)
+			{
+				// 直接触发 背包元素的 装戴虚方法
+				Item.ItemInstance->OnEquipped(GetOwner());
+				CurrentItem = Item.ItemInstance;
+				break;
+			}
 		}
 	}
 }
 
-void UInventoryComponent::UnEquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
+void UInventoryComponent::UnEquipItem()
 {
 	// 只在服务器上初始化
 	if (GetOwner()->HasAuthority())
 	{
-		for (auto Item : InventoryList.GetItemsRef())
+		if (IsValid(CurrentItem))
 		{
-			// 献给一个加上装备
-			// 直接触发 背包元素的 卸载虚方法
-			Item.ItemInstance->OnUnEquipped();
-
-			// *****  2 讲解的 下一步
+			CurrentItem->OnUnEquipped();
 			CurrentItem = nullptr;
-			break;
 		}
 	}
 }
@@ -138,13 +145,6 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 			{
 				// 获取默认 成员对象
 				const UItemStaticData* ItemStaticData =  ItemInstance->GetItemStaticData();
-				if (GetOwner()->GetLocalRole() == ROLE_Authority)
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Blue, FString::Printf(TEXT("Server Item: %s  id== %d"), *ItemStaticData->Name.ToString(), ItemStaticData->Id));
-				} else
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Blue, FString::Printf(TEXT("Client Item: %s  id== %d"), *ItemStaticData->Name.ToString(), ItemStaticData->Id));
-				}
 			}
 		}
 	}

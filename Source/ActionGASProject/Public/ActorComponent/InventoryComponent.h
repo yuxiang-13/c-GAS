@@ -36,17 +36,20 @@ public:
 	 */
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
+	virtual void BeginPlay() override;
+
 	
 	// 提供删除增加装备 的接口
 	UFUNCTION(BlueprintCallable)
 	void AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
 	UFUNCTION(BlueprintCallable)
 	void RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
-	// 装配 卸载 装备
+	// 装配   卸载  当前 装备
 	UFUNCTION(BlueprintCallable)
 	void EquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	
 	UFUNCTION(BlueprintCallable)
-	void UnEquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	void UnEquipItem();
 
 
 

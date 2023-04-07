@@ -41,7 +41,7 @@ public:
 	void OnRep_Equipped();
 
 	// 声明一些以后会用到虚方法
-	virtual void OnEquipped();
+	virtual void OnEquipped(AActor* InOwer = nullptr);
 	virtual void OnUnEquipped();
 
 protected:
