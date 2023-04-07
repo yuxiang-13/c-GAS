@@ -7,6 +7,8 @@
 // 让此文件支持反射
 #include "ActionGameTypes.generated.h"
 
+class AItemActor;
+
 USTRUCT(BlueprintType)
 struct FCharacterData
 {
@@ -117,7 +119,9 @@ public:
 	// 通用参数
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FName Name;
-	
-	int32 Id;
+
+	// 指定道具 BP
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<AItemActor> ItemActorClass;
 };
 

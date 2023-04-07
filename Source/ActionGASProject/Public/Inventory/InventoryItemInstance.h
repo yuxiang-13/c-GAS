@@ -10,6 +10,7 @@
  */
 
 class UItemStaticData;
+class AItemActor;
 
 // 把这个暴漏给蓝图
 UCLASS(BlueprintType, Blueprintable)
@@ -40,8 +41,12 @@ public:
 	void OnRep_Equipped();
 
 	// 声明一些以后会用到虚方法
-	virtual void OnEquipped() {};
-	virtual void OnUnEquipped() {};
+	virtual void OnEquipped();
+	virtual void OnUnEquipped();
+
+protected:
+	UPROPERTY(Replicated)
+	AItemActor* ItemActor = nullptr;
 
 	// 返回用于网络复制的属性，这需要由具有本机复制属性的所有参与者类重写 声明自己要同步什么东西
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

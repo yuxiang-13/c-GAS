@@ -17,7 +17,6 @@ public:
 	// Sets default values for this component's properties
 	UInventoryComponent();
 
-protected:
 	/*
 	InitializeComponent 和 BeginPlay 都是用于在组件中进行初始化的重要函数。尽管它们的目的类似，但它们之间有一些关键的区别。
 	
@@ -37,12 +36,38 @@ protected:
 	 */
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
+	
+	// 提供删除增加装备 的接口
+	UFUNCTION(BlueprintCallable)
+	void AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	UFUNCTION(BlueprintCallable)
+	void RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	// 装配 卸载 装备
+	UFUNCTION(BlueprintCallable)
+	void EquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	UFUNCTION(BlueprintCallable)
+	void UnEquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+
+
+
+	
+	// 获取当前装 装戴着的装备
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	UInventoryItemInstance* GetEquippedItem() const;
+	
+protected:
 	UPROPERTY(Replicated)
 	FInventoryList InventoryList;
 
 	//蓝图指定 用于初始化 上面这个 InventoryList
 	UPROPERTY(EditDefaultsOnly)
 	TArray<TSubclassOf<UItemStaticData>> DefaultItems;
+
+
+	
+	// 当前装备
+	UPROPERTY(Replicated)
+	UInventoryItemInstance* CurrentItem = nullptr;
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

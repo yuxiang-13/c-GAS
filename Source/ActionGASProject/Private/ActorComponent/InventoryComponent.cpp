@@ -71,6 +71,57 @@ bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch*
 	return WroteSomething;
 }
 
+void UInventoryComponent::AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
+{
+	InventoryList.AddItem(InItemStaticDataClass);
+}
+
+void UInventoryComponent::RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
+{
+	InventoryList.RemoveItem(InItemStaticDataClass);
+}
+
+void UInventoryComponent::EquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
+{
+	// 只在服务器上初始化
+	if (GetOwner()->HasAuthority())
+	{
+		for (auto Item : InventoryList.GetItemsRef())
+		{
+			// 先给一个加上装备
+			// 直接触发 背包元素的 装戴虚方法
+			Item.ItemInstance->OnEquipped();
+			
+			// *****  2 讲解的 下一步
+			CurrentItem = Item.ItemInstance;
+			break;
+		}
+	}
+}
+
+void UInventoryComponent::UnEquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
+{
+	// 只在服务器上初始化
+	if (GetOwner()->HasAuthority())
+	{
+		for (auto Item : InventoryList.GetItemsRef())
+		{
+			// 献给一个加上装备
+			// 直接触发 背包元素的 卸载虚方法
+			Item.ItemInstance->OnUnEquipped();
+
+			// *****  2 讲解的 下一步
+			CurrentItem = nullptr;
+			break;
+		}
+	}
+}
+
+UInventoryItemInstance* UInventoryComponent::GetEquippedItem() const
+{
+	return CurrentItem;
+}
+
 // Called every frame
 void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -104,5 +155,6 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(UInventoryComponent, InventoryList);
+	DOREPLIFETIME(UInventoryComponent, CurrentItem);
 }
 
