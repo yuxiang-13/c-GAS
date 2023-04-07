@@ -12,6 +12,7 @@
 #include "ActorComponent/AG_CharacterMovementComponent.h"
 #include "ActorComponent/AG_MotionWarpingComponent.h"
 #include "ActorComponent/FootstepsComponent.h"
+#include "ActorComponent/InventoryComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -97,6 +98,11 @@ AActionGASProjectCharacter::AActionGASProjectCharacter(const FObjectInitializer&
 	// 客户端和服务器之间需要同步游戏状态，包括属性值的变化。因此，该回调函数在客户端和服务器上都会被响应
 	// 当客户端的属性值发生变化时，客户端会触发该回调函数，并向服务器发送属性值变化的通知。而服务器也会监听该回调函数，并更新游戏状态，然后将状态同步给所有的客户端。
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &AActionGASProjectCharacter::OnMaxMovementSpeedChanged);
+
+	// 原视频也是放到character中了，实际上可以放到PlayerState中
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+	// 开启组件复制，允许服务器创建actorcomponent后，这个组件能 自动复制到客户端
+	InventoryComponent->SetIsReplicated(true);
 }
 
 void AActionGASProjectCharacter::Tick(float DeltaSeconds)
@@ -462,6 +468,7 @@ void AActionGASProjectCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AActionGASProjectCharacter, CharacterData);
+	DOREPLIFETIME(AActionGASProjectCharacter, InventoryComponent);
 }
 
 

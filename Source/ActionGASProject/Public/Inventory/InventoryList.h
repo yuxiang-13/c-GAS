@@ -53,7 +53,8 @@ public:
 
 	void AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
 	void RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
-	
+
+	TArray<FInventoryListItem>& GetItemsRef();
 protected:
 
 	// 属性加 UPROPERTY 标签 才能序列化，所以 这里必须加，否则FFastArraySerializer::FastArrayDeltaSerialize<FInventoryListItem, FInventoryList>( Items, DeltaParms, *this ); 无法通过

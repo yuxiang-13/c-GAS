@@ -118,5 +118,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FName Name;
 	
+	int32 Id;
 };
 

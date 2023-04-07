@@ -38,3 +38,8 @@ void FInventoryList::RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataCla
 		}
 	}
 }
+
+TArray<FInventoryListItem>& FInventoryList::GetItemsRef()
+{
+	return Items;
+}

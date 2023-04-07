@@ -23,6 +23,7 @@ struct FCharacterData;
 
 class UAG_MotionWarpingComponent;
 class UAG_CharacterMovementComponent;
+class UInventoryComponent;
 
 UCLASS(config=Game)
 class AActionGASProjectCharacter : public ACharacter, public IAbilitySystemInterface
@@ -198,5 +199,10 @@ protected:
 
 protected:
 	FDelegateHandle MaxMovementSpeedChangedDelegateHandle;
+
+protected:
+	// 背包
+	UPROPERTY(EditAnywhere, Replicated)
+	UInventoryComponent* InventoryComponent;
 };
 

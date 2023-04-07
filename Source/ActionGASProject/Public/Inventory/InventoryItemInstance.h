@@ -11,7 +11,8 @@
 
 class UItemStaticData;
 
-UCLASS()
+// 把这个暴漏给蓝图
+UCLASS(BlueprintType, Blueprintable)
 class ACTIONGASPROJECT_API UInventoryItemInstance : public UObject
 {
 	GENERATED_BODY()
@@ -22,6 +23,10 @@ public:
 	//该函数用于检查一个对象是否适用于网络同步。
 	virtual bool IsSupportedForNetworking() const override { return true; };
 
+	// 返回这个默认的对象
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	const UItemStaticData* GetItemStaticData() const;
+	
 	// 属性 网络同步
 	// 用于自动同步变量到客户端和服务器之间，如果在服务器上修改了变量，它会自动同步到各个客户端。这个过程是自动的，不需要做其他的设置。
 	UPROPERTY(Replicated)
@@ -40,5 +45,4 @@ public:
 
 	// 返回用于网络复制的属性，这需要由具有本机复制属性的所有参与者类重写 声明自己要同步什么东西
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 };

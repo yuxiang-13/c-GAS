@@ -2,11 +2,19 @@
 
 
 #include "Inventory/InventoryItemInstance.h"
+
+#include "ActionGameStatic.h"
 #include "Net/UnrealNetwork.h"
 
 void UInventoryItemInstance::Init(TSubclassOf<UItemStaticData> InItemStaticDataClass)
 {
 	ItemStaticDataClass = InItemStaticDataClass;
+}
+
+const UItemStaticData* UInventoryItemInstance::GetItemStaticData() const
+{
+	// 函数库  创建并返回 默认的对象
+	return UActionGameStatic::GetItemStaticData(ItemStaticDataClass);
 }
 
 void UInventoryItemInstance::OnRep_Equipped()
