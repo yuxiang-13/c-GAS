@@ -56,14 +56,14 @@ void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	// 默认第一个是默认装备的武器
-	if (InventoryList.GetItemsRef().Num())
-	{
-		EquipItem(InventoryList.GetItemsRef()[0].ItemInstance->ItemStaticDataClass);
-	}
+	// if (InventoryList.GetItemsRef().Num())
+	// {
+	// 	EquipItem(InventoryList.GetItemsRef()[0].ItemInstance->ItemStaticDataClass);
+	// }
 
 	// UnEquipItem();
 	//DropItem()
-	DropItem();
+	// DropItem();
 }
 
 bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -79,7 +79,8 @@ bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch*
 		if (IsValid(ItemInstance))
 		{
 			// UActorChannel* Channel：指定传输数据
-			WroteSomething = Channel->ReplicateSubobject(ItemInstance, *Bunch, *RepFlags);
+			
+			WroteSomething |= Channel->ReplicateSubobject(ItemInstance, *Bunch, *RepFlags);
 		}
 	}
 
@@ -135,6 +136,9 @@ void UInventoryComponent::DropItem()
 		if (IsValid(CurrentItem))
 		{
 			CurrentItem->OnDropped();
+			// 背包数据中移除这个元素
+			RemoveItem(CurrentItem->ItemStaticDataClass);
+			
 			CurrentItem = nullptr;
 		}
 	}

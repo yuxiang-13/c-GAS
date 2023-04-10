@@ -26,7 +26,7 @@ void FInventoryList::RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataCla
 	for (auto ItemIter = Items.CreateIterator(); ItemIter; ++ItemIter)
 	{
 		FInventoryListItem& Item = *ItemIter;
-		if (Item.ItemInstance && Item.ItemInstance->IsA(InItemStaticDataClass))
+		if (Item.ItemInstance && Item.ItemInstance->GetItemStaticData()->IsA(InItemStaticDataClass))
 		{
 			// 删除
 			ItemIter.RemoveCurrent();

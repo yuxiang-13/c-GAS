@@ -3,6 +3,9 @@
 
 #include "Actors/ItemActor.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "Components/SphereComponent.h"
 #include "Engine/ActorChannel.h"
 #include "Net/UnrealNetwork.h"
@@ -88,7 +91,8 @@ bool AItemActor::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, F
 	if (IsValid(ItemInstance))
 	{
 		// UActorChannel* Channel：指定传输数据
-		WroteSomething = Channel->ReplicateSubobject(ItemInstance, *Bunch, *RepFlags);
+		// `|=` 是按位或赋值运算符 , 运算符只对整数类型有效
+		WroteSomething |= Channel->ReplicateSubobject(ItemInstance, *Bunch, *RepFlags);
 	}
 	return WroteSomething;
 }
@@ -103,7 +107,11 @@ void AItemActor::BeginPlay()
 void AItemActor::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	
+	FGameplayEventData EventPlayload;
+	// OptionalObject 任意对象
+	EventPlayload.OptionalObject = this; // this, 表示当前道具，已经开启了网络复制，所以ok
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(OtherActor, OverlapEventTag, EventPlayload);
 }
 
 // Called every frame
