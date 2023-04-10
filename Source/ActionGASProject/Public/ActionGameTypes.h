@@ -122,6 +122,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FName AttachmentSocket = NAME_None;
+
+	// 是否可以进行装备标识
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bCanBeEquipped = false;
 };
 
 UENUM()

@@ -8,11 +8,14 @@
 #include "InventoryComponent.generated.h"
 
 
+class UInventoryItemInstance;
+struct FGameplayEventData;
+struct FGameplayTag;
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ACTIONGASPROJECT_API UInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
-
 public:	
 	// Sets default values for this component's properties
 	UInventoryComponent();
@@ -42,6 +45,16 @@ public:
 	// 提供删除增加装备 的接口
 	UFUNCTION(BlueprintCallable)
 	void AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	
+	// 通过类的实例 添加
+	/*
+	 * 注意  这个函数名跟上面一样  虽然参数列表不同，但是标签是支持蓝图访问的，所以不能同名
+	UFUNCTION(BlueprintCallable) 
+	void AddItem(UInventoryItemInstance* InItemInstance);
+	*/
+	UFUNCTION(BlueprintCallable) 
+	void AddItemInstance(UInventoryItemInstance* InItemInstance);
+	
 	UFUNCTION(BlueprintCallable)
 	void RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
 	// 装配   卸载  当前 装备
@@ -49,24 +62,47 @@ public:
 	void EquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
 	
 	UFUNCTION(BlueprintCallable)
+	void EquipItemInstance(UInventoryItemInstance* InItemInstance);
+	
+	UFUNCTION(BlueprintCallable)
 	void UnEquipItem();
 
 	UFUNCTION(BlueprintCallable)
 	void DropItem();
+
+	// 装备下一件装备
+	UFUNCTION(BlueprintCallable)
+	void EquipNext();
 	
 	// 获取当前装 装戴着的装备
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	UInventoryItemInstance* GetEquippedItem() const;
 	
+	UFUNCTION()
+	void AddInventoryTags();
+
+	// 通过GameplayEvent事件处理 背包装备的 穿戴丢弃
+	virtual void GameplayEventCallback(const FGameplayEventData* Playload);
+	
+public:
+	static FGameplayTag EquipItemActorTag;
+	static FGameplayTag DropItemTag;
+	static FGameplayTag EquipNextTag;
+	static FGameplayTag UnEquipTag;
+	
 protected:
+	void HandleGameplayEventInternal(FGameplayEventData PayLoad);
+
+	// 提供服务器触发事件
+	UFUNCTION(Server, Reliable)
+	void ServerHandleGameplayEvent(FGameplayEventData PayLoad);
+	
 	UPROPERTY(Replicated)
 	FInventoryList InventoryList;
 
 	//蓝图指定 用于初始化 上面这个 InventoryList
 	UPROPERTY(EditDefaultsOnly)
 	TArray<TSubclassOf<UItemStaticData>> DefaultItems;
-
-
 	
 	// 当前装备
 	UPROPERTY(Replicated)
@@ -75,6 +111,5 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 };

@@ -3,7 +3,12 @@
 
 #include "ActorComponent/InventoryComponent.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
 #include "ActionGameTypes.h"
+#include "GameplayTagContainer.h"
+#include "GameplayTagsManager.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "Engine/ActorChannel.h"
 #include "Inventory/InventoryItemInstance.h"
 #include "Net/UnrealNetwork.h"
@@ -22,6 +27,12 @@ static TAutoConsoleVariable<int32> CVarShowInventory(TEXT("ShowDebugInventory"),
 //..其他的我也不清楚。需要看文档，就先不说了
 
 
+// 初始化静态变量
+FGameplayTag UInventoryComponent::EquipItemActorTag;
+FGameplayTag UInventoryComponent::DropItemTag;
+FGameplayTag UInventoryComponent::EquipNextTag;
+FGameplayTag UInventoryComponent::UnEquipTag;
+
 // Sets default values for this component's properties
 UInventoryComponent::UInventoryComponent()
 {
@@ -37,6 +48,22 @@ UInventoryComponent::UInventoryComponent()
 	// 使用 SetIsReplicatedByDefault 方法 开启 成员属性的网络同步，默认是不开启的
 	SetIsReplicatedByDefault(true);
 	// ...
+
+	// 为游戏增加GameplayTags的代理，在 游戏启动时自动触发
+	UGameplayTagsManager().Get().OnLastChanceToAddNativeTags().AddUObject(this, &UInventoryComponent::AddInventoryTags);
+}
+
+void UInventoryComponent::AddInventoryTags()
+{
+	UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
+
+	UInventoryComponent::EquipItemActorTag = TagsManager.AddNativeGameplayTag(TEXT("Event.Inventory.EquipItem"), TEXT("Equip Item Form Item Actor Event"));
+	UInventoryComponent::DropItemTag = TagsManager.AddNativeGameplayTag(TEXT("Event.Inventory.DropItem"), TEXT("Drop Equipped Item"));
+	UInventoryComponent::EquipNextTag = TagsManager.AddNativeGameplayTag(TEXT("Event.Inventory.EquipNext"), TEXT("Try Equip Next Item"));
+	UInventoryComponent::UnEquipTag = TagsManager.AddNativeGameplayTag(TEXT("Event.Inventory.UnEquip"), TEXT("UnEquip Current Item"));
+
+	// 使用完了，给移除
+	TagsManager.OnLastChanceToAddNativeTags().RemoveAll(this);
 }
 
 void UInventoryComponent::InitializeComponent()
@@ -48,6 +75,17 @@ void UInventoryComponent::InitializeComponent()
 		{
 			InventoryList.AddItem(ItemClass);
 		}
+	}
+
+	
+	// 代理，我们要绑定 代理，代理传递的参数是 GameplayEventData,里面有各种标签，这样，标签代表不同处理
+	if (UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner()))
+	{
+		// 绑定 GameplayEvent 响应事件代理。这样相应的事件被触发时，回调函数就会被执行
+		ASC->GenericGameplayEventCallbacks.FindOrAdd(UInventoryComponent::EquipItemActorTag).AddUObject(this, &UInventoryComponent::GameplayEventCallback);
+		ASC->GenericGameplayEventCallbacks.FindOrAdd(UInventoryComponent::DropItemTag).AddUObject(this, &UInventoryComponent::GameplayEventCallback);
+		ASC->GenericGameplayEventCallbacks.FindOrAdd(UInventoryComponent::EquipNextTag).AddUObject(this, &UInventoryComponent::GameplayEventCallback);
+		ASC->GenericGameplayEventCallbacks.FindOrAdd(UInventoryComponent::UnEquipTag).AddUObject(this, &UInventoryComponent::GameplayEventCallback);
 	}
 }
 
@@ -64,6 +102,58 @@ void UInventoryComponent::BeginPlay()
 	// UnEquipItem();
 	//DropItem()
 	// DropItem();
+}
+
+
+void UInventoryComponent::GameplayEventCallback(const FGameplayEventData* Playload)
+{
+	ENetRole NetRole = GetOwnerRole();
+	
+	if (NetRole == ROLE_Authority)
+	{
+		HandleGameplayEventInternal(*Playload);
+	} else if (NetRole == ROLE_AutonomousProxy) // 自主代理，玩家自己
+	{
+		ServerHandleGameplayEvent(*Playload);
+	}
+}
+
+void UInventoryComponent::ServerHandleGameplayEvent_Implementation(FGameplayEventData PayLoad)
+{
+	HandleGameplayEventInternal(PayLoad);
+}
+
+void UInventoryComponent::HandleGameplayEventInternal(FGameplayEventData PayLoad)
+{
+	ENetRole NetRole = GetOwnerRole();
+	if (NetRole == ROLE_Authority)
+	{
+		// 获取事件中的 Tag
+		FGameplayTag EventTag = PayLoad.EventTag;
+		if (EventTag == UInventoryComponent::EquipItemTag)
+		{
+			if (const UInventoryItemInstance* ItemInstance = Cast<UInventoryItemInstance>(PayLoad.OptionalObject))
+			{
+				// 手动把 const 强转
+				// AddItemInstance(ItemInstance);
+				AddItemInstance(const_cast<UInventoryItemInstance*>(ItemInstance));
+				if (PayLoad.Instigator)
+				{
+					// AItemActor::OnSphereOverlap 转 this，我们要删除他
+					const_cast<AActor*>(PayLoad.Instigator)->Destroy();
+				}
+			}
+		} else if (EventTag == UInventoryComponent::EquipNextTag)
+		{
+			EquipNext();
+		} else if (EventTag == UInventoryComponent::DropItemTag)
+		{
+			DropItem();
+		} else if (EventTag == UInventoryComponent::UnEquipTag)
+		{
+			UnEquipItem();
+		} 
+	} 
 }
 
 bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -89,14 +179,71 @@ bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch*
 
 void UInventoryComponent::AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
 {
-	InventoryList.AddItem(InItemStaticDataClass);
+	if (GetOwner()->HasAuthority())
+	{
+		InventoryList.AddItem(InItemStaticDataClass);
+	}
+}
+
+
+void UInventoryComponent::AddItemInstance(UInventoryItemInstance* InItemInstance)
+{
+	if (GetOwner()->HasAuthority())
+	{
+		InventoryList.AddItem(InItemInstance);
+	}
+}
+
+
+// 装备下一件装备
+void UInventoryComponent::EquipNext()
+{
+	TArray<FInventoryListItem>& Items = InventoryList.GetItemsRef();
+
+	const bool bNoItems = Items.Num() == 0;
+	const bool bOneAndEquipped = Items.Num() == 1 && CurrentItem;
+
+	if (bNoItems || bOneAndEquipped) return;
+
+	UInventoryItemInstance* TargetItem = CurrentItem;
+	// 有些物品无法装备，所以需要遍历,找出合适的装备
+	for (auto Item: Items)
+	{
+		// 检测是否可以装备
+		if (Item.ItemInstance->GetItemStaticData()->bCanBeEquipped)
+		{
+			// 不是当前装备
+			if (Item.ItemInstance != CurrentItem)
+			{
+				TargetItem = Item.ItemInstance;
+				break;
+			}
+		}
+	}
+
+	if (CurrentItem)
+	{
+		if (CurrentItem == TargetItem)
+		{
+			return;
+		} else
+		{
+			// 卸载老装备
+			UnEquipItem();
+			EquipItemInstance(CurrentItem);
+		}
+	}
 }
 
 void UInventoryComponent::RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
 {
-	InventoryList.RemoveItem(InItemStaticDataClass);
+	if (GetOwner()->HasAuthority())
+	{
+		InventoryList.RemoveItem(InItemStaticDataClass);
+	}
 }
 
+// 通过参数判断背包中是否存在此装备，再进行穿戴
 void UInventoryComponent::EquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
 {
 	// 只在服务器上初始化
@@ -105,6 +252,25 @@ void UInventoryComponent::EquipItem(TSubclassOf<UItemStaticData> InItemStaticDat
 		for (auto Item : InventoryList.GetItemsRef())
 		{
 			if (Item.ItemInstance->ItemStaticDataClass == InItemStaticDataClass)
+			{
+				// 直接触发 背包元素的 装戴虚方法
+				Item.ItemInstance->OnEquipped(GetOwner());
+				CurrentItem = Item.ItemInstance;
+				break;
+			}
+		}
+	}
+}
+
+// 通过参数判断背包中是否存在此装备，再进行穿戴
+void UInventoryComponent::EquipItemInstance(UInventoryItemInstance* InItemInstance)
+{
+	// 只在服务器上初始化
+	if (GetOwner()->HasAuthority())
+	{
+		for (auto Item : InventoryList.GetItemsRef())
+		{
+			if (Item.ItemInstance == InItemInstance)
 			{
 				// 直接触发 背包元素的 装戴虚方法
 				Item.ItemInstance->OnEquipped(GetOwner());
