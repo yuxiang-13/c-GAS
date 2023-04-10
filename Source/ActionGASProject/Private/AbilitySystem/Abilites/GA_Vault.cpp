@@ -186,12 +186,9 @@ bool UGA_Vault::CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGame
 			{
 				// 这时，因为我们确定了水平撞击点，也确定了这个点 垂直方向上，与障碍物的Z，那就直接设置成 水平撞击点位置，这下连Z轴都确定了
 				JumpToLocation = JumpOverLocation;
+				// ok了，已经存在第一次垂直碰撞点了
+				bJumpOverLocationSet = true;
 			}
-		} else if (i != 0)
-		{
-			// ok了，已经存在第一次垂直碰撞点了
-			bJumpOverLocationSet = true;
-			break;
 		}
 	}
 

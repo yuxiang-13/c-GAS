@@ -43,6 +43,7 @@ public:
 	// 声明一些以后会用到虚方法
 	virtual void OnEquipped(AActor* InOwer = nullptr);
 	virtual void OnUnEquipped();
+	virtual void OnDropped();
 
 protected:
 	UPROPERTY(Replicated)

@@ -21,7 +21,7 @@ struct FCharacterData
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="GAS")
 	TArray<TSubclassOf<class UGameplayEffect>> Effects;
-	
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="GAS")
 	TArray<TSubclassOf<class UGameplayAbility>> Abilitys;
 
@@ -45,14 +45,14 @@ struct FCharacterAnimationData
 	// 混合空间
 	UPROPERTY(EditDefaultsOnly)
 	class UBlendSpace* MovementBlendspace = nullptr;
-	
+
 	UPROPERTY(EditDefaultsOnly)
 	class UAnimSequence* IdleAnimationAsset = nullptr;
 
 	// 蹲伏动画
 	UPROPERTY(EditDefaultsOnly)
 	class UBlendSpace* CrouchMovementBlendspace = nullptr;
-	
+
 	UPROPERTY(EditDefaultsOnly)
 	class UAnimSequence* CrouchAnimationAsset = nullptr;
 };
@@ -67,8 +67,6 @@ enum class EFoot: uint8
 };
 
 
-
-
 USTRUCT(BlueprintType)
 struct FMotionWarpingTargetByLocationAndRotation
 {
@@ -81,16 +79,14 @@ struct FMotionWarpingTargetByLocationAndRotation
 
 	FMotionWarpingTargetByLocationAndRotation()
 	{
-		
 	}
 
 	FMotionWarpingTargetByLocationAndRotation(FName InName, FVector InLocation, FRotator InRotation)
-		:Name(InName)
-		,Location(InLocation)
-		,Rotation(InRotation)
-	
+		: Name(InName)
+		  , Location(InLocation)
+		  , Rotation(InRotation)
+
 	{
-		
 	}
 
 	UPROPERTY()
@@ -128,3 +124,10 @@ public:
 	FName AttachmentSocket = NAME_None;
 };
 
+UENUM()
+enum class EItemState: uint8
+{
+	None UMETA(DisplayName = "None"),
+	Equipped UMETA(DisplayName = "Equipped"),
+	Dropped UMETA(DisplayName = "Dropped"),
+};

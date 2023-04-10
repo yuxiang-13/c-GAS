@@ -51,8 +51,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UnEquipItem();
 
-
-
+	UFUNCTION(BlueprintCallable)
+	void DropItem();
 	
 	// 获取当前装 装戴着的装备
 	UFUNCTION(BlueprintCallable, BlueprintPure)

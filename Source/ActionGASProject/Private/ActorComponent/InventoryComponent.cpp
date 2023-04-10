@@ -48,7 +48,6 @@ void UInventoryComponent::InitializeComponent()
 		{
 			InventoryList.AddItem(ItemClass);
 		}
-
 	}
 }
 
@@ -62,7 +61,9 @@ void UInventoryComponent::BeginPlay()
 		EquipItem(InventoryList.GetItemsRef()[0].ItemInstance->ItemStaticDataClass);
 	}
 
-	UnEquipItem();
+	// UnEquipItem();
+	//DropItem()
+	DropItem();
 }
 
 bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -121,6 +122,19 @@ void UInventoryComponent::UnEquipItem()
 		if (IsValid(CurrentItem))
 		{
 			CurrentItem->OnUnEquipped();
+			CurrentItem = nullptr;
+		}
+	}
+}
+
+void UInventoryComponent::DropItem()
+{
+	// 只在服务器上初始化
+	if (GetOwner()->HasAuthority())
+	{
+		if (IsValid(CurrentItem))
+		{
+			CurrentItem->OnDropped();
 			CurrentItem = nullptr;
 		}
 	}

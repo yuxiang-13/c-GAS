@@ -430,6 +430,8 @@ void AActionGASProjectCharacter::OnStartCrouch(float HalfHeightAdjust, float Sca
 	// 检查是否有效
 	if (!CrouchStateEffect.Get()) return;
 
+	UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-0000 - ->>>> %f"), 0.0f) , true, true, FLinearColor::Red, 10.f);
+	
 	if (AbilitySystemComponent)
 	{
 		// 创建GE内容句柄

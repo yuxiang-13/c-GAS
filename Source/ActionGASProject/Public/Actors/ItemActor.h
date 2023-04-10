@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActionGameTypes.h"
 #include "GameFramework/Actor.h"
 #include "ItemActor.generated.h"
 
 class UInventoryItemInstance;
+class USphereComponent;
 
 UCLASS()
 class ACTIONGASPROJECT_API AItemActor : public AActor
@@ -42,6 +44,20 @@ protected:
 	// 指向背包元素的指针
 	UPROPERTY(Replicated)
 	UInventoryItemInstance* ItemInstance = nullptr;
+
+	UPROPERTY(Replicated)
+	TEnumAsByte<EItemState> ItemState = EItemState::None;
+
+	// 碰撞
+	UPROPERTY()
+	USphereComponent* SphereComponent = nullptr;
+
+	//DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_SixParams( FComponentBeginOverlapSignature, UPrimitiveComponent, OnComponentBeginOverlap,
+	// UPrimitiveComponent*, OverlappedComponent, AActor*, OtherActor, UPrimitiveComponent*, OtherComp, int32, OtherBodyIndex, bool, bFromSweep, const FHitResult &, SweepResult);
+
+	UFUNCTION()
+	void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
