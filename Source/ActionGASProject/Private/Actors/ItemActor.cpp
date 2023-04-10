@@ -19,6 +19,8 @@ AItemActor::AItemActor()
 	PrimaryActorTick.bCanEverTick = true;
 	// 开启网络同步
 	bReplicates = true;
+	// 开启移动同步
+	SetReplicateMovement(true);
 
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
 	SphereComponent->SetupAttachment(RootComponent);
@@ -46,7 +48,7 @@ void AItemActor::OnUnEquipped()
 // 丢弃
 void AItemActor::OnDropped()
 {
-	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	// 首先要知道，物品在咱们手上时候，已经关闭了碰撞  OnEquipped() 函数，所以我们要在 物体接触到地面位置后, 开启碰撞
 	
 	ItemState = EItemState::Dropped;
 	// 物品分离
@@ -72,15 +74,25 @@ void AItemActor::OnDropped()
 		const bool bShowTraversal = CVar->GetInt() > 0;
 		EDrawDebugTrace::Type DebugDrawType = bShowTraversal ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None;
 
+		// 开始解决这个问题
+		FVector TargetLocation = TraceEnd;
+		
 		// 放到地面
 		if (UKismetSystemLibrary::LineTraceSingleByProfile(this, TraceStart, TraceEnd, TEXT("worldStatic"), true, ActorsToIgnore, DebugDrawType, TraceHit, true))
 		{
 			if (TraceHit.bBlockingHit)
 			{
-				SetActorLocation(TraceHit.Location + FVector::UpVector * 20);
+				TargetLocation = TraceHit.Location;
 			}
 		}
+		SetActorLocation(TargetLocation);
+	
+		SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		// 是否生成重叠事件（Overlap Event）。其中，`true`表示要开启碰撞重叠事件的生成，`false`表示不开启。
+		// 开启碰撞查询
+		SphereComponent->SetGenerateOverlapEvents(true);
 	}
+
 };
 
 bool AItemActor::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -97,11 +109,26 @@ bool AItemActor::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, F
 	return WroteSomething;
 }
 
-// Called when the game starts or when spawned
+// 通过数据 实例化 Actor
 void AItemActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (HasAuthority())
+	{
+		// 指向背包元素的指针 && 静态数据类 都存在
+		if (!IsValid(ItemInstance) && IsValid(ItemStaticDataClass))
+		{
+			ItemInstance = NewObject<UInventoryItemInstance>();
+			ItemInstance->Init(ItemStaticDataClass);
+		}
+	}
+
+	// C  S 都启动碰撞
+	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	// 是否生成重叠事件（Overlap Event）。其中，`true`表示要开启碰撞重叠事件的生成，`false`表示不开启。
+	// 开启碰撞查询
+	SphereComponent->SetGenerateOverlapEvents(true);
 }
 
 void AItemActor::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

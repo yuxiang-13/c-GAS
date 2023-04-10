@@ -51,7 +51,10 @@ public:
 	// 需要注意的是，FFastArraySerializer 与普通的 TArray 数据类型不同，它没有提供一些常用的数组操作方法。
 	// 所以，在使用时，需要在自定义结构体类中自行添加需要的方法来操作数据
 
+	// 通过类 添加
 	void AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	// 通过类的实例 添加
+	void AddItem(UInventoryItemInstance* InItemInstance);
 	void RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
 
 	TArray<FInventoryListItem>& GetItemsRef();

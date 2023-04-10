@@ -34,6 +34,7 @@ void UInventoryItemInstance::OnEquipped(AActor* InOwer)
 		// 2 SpawnActorDeferred 只会创建一个虚拟的Actor对象并不会为其分配内存,需要创建时候，直接调用 FinishSpawning
 		ItemActor = InOwer->GetWorld()->SpawnActorDeferred<AItemActor>(StaticData->ItemActorClass, Transform, InOwer);
 		ItemActor->Init(this);
+		ItemActor->OnEquipped();
 		ItemActor->FinishSpawning(Transform);
 
 		// 检测骨架
@@ -44,8 +45,7 @@ void UInventoryItemInstance::OnEquipped(AActor* InOwer)
 				ItemActor->AttachToComponent(SkeletalMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, StaticData->AttachmentSocket);
 			}
 		}
-		
-
+		bEquipped = true;
 	}
 }
 
@@ -56,6 +56,8 @@ void UInventoryItemInstance::OnUnEquipped()
 		ItemActor->Destroy();
 		ItemActor = nullptr;
 	}
+	// OnUnEquipped 函数只会在 背包component中 服务器上触发
+	bEquipped = false;
 }
 
 void UInventoryItemInstance::OnDropped()
@@ -64,6 +66,8 @@ void UInventoryItemInstance::OnDropped()
 	{
 		ItemActor->OnDropped();
 	}
+	// OnUnEquipped 函数只会在 背包component中 服务器上触发
+	bEquipped = false;
 }
 
 void UInventoryItemInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
