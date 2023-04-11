@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayAbilitySpecHandle.h"
+#include "GameplayAbilitySpec.h"
 #include "InventoryItemInstance.generated.h"
 
 /**
@@ -42,13 +44,22 @@ public:
 
 	// 声明一些以后会用到虚方法
 	virtual void OnEquipped(AActor* InOwer = nullptr);
-	virtual void OnUnEquipped();
-	virtual void OnDropped();
+	virtual void OnUnEquipped(AActor* InOwer = nullptr);
+	virtual void OnDropped(AActor* InOwer = nullptr);
 
 protected:
 	UPROPERTY(Replicated)
 	AItemActor* ItemActor = nullptr;
 
+	// 赋予能力
+	void TryGrantAbilities(AActor* InOwner);
+	// 移除能力
+	void TryRemoveAbilities(AActor* InOwner);
+
+	// 能力实力的句柄
+	UPROPERTY()
+	TArray<FGameplayAbilitySpecHandle> GrantedAbilityHandles;
+	
 	// 返回用于网络复制的属性，这需要由具有本机复制属性的所有参与者类重写 声明自己要同步什么东西
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

@@ -29,9 +29,51 @@ AItemActor::AItemActor()
 	SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AItemActor::OnSphereOverlap);
 }
 
+
+// 通过数据 实例化 Actor
+void AItemActor::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (HasAuthority())
+	{
+		// 指向背包元素的指针 && 静态数据类 都存在
+		if (!IsValid(ItemInstance) && IsValid(ItemStaticDataClass))
+		{
+			ItemInstance = NewObject<UInventoryItemInstance>();
+			ItemInstance->Init(ItemStaticDataClass);
+			
+			MulticastCollisionEnabled(true);
+			
+	        InitInternal();
+		}
+	}
+}
+
+// 背包装备时触发函数 ，并且这个发生在服务器
 void AItemActor::Init(UInventoryItemInstance* InInstance)
 {
+	// 服务器也要初始化  UInventoryComponent::EquipItemInstance -> UInventoryItemInstance::OnEquipped
 	ItemInstance = InInstance;
+	
+	InitInternal();
+}
+
+
+
+void AItemActor::OnRep_ItemInstance(UInventoryItemInstance* OldItemInstance)
+{
+	// 保护
+	if (IsValid(ItemInstance) && IsValid(OldItemInstance))
+	{
+		InitInternal();
+	}
+}
+
+void AItemActor::InitInternal()
+{
+	// 此函数 发生在服务器
+	
 }
 
 // 声明一些以后会用到虚方法
@@ -106,24 +148,6 @@ bool AItemActor::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, F
 		WroteSomething |= Channel->ReplicateSubobject(ItemInstance, *Bunch, *RepFlags);
 	}
 	return WroteSomething;
-}
-
-// 通过数据 实例化 Actor
-void AItemActor::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (HasAuthority())
-	{
-		// 指向背包元素的指针 && 静态数据类 都存在
-		if (!IsValid(ItemInstance) && IsValid(ItemStaticDataClass))
-		{
-			ItemInstance = NewObject<UInventoryItemInstance>();
-			ItemInstance->Init(ItemStaticDataClass);
-			
-			MulticastCollisionEnabled(true);
-		}
-	}
 }
 
 void AItemActor::MulticastCollisionEnabled_Implementation(bool bFlag)

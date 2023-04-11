@@ -3,6 +3,8 @@
 
 #include "Inventory/InventoryItemInstance.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
 #include "ActionGameStatic.h"
 #include "Actors/ItemActor.h"
 #include "GameFramework/Character.h"
@@ -45,29 +47,71 @@ void UInventoryItemInstance::OnEquipped(AActor* InOwer)
 				ItemActor->AttachToComponent(SkeletalMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, StaticData->AttachmentSocket);
 			}
 		}
+		
+		TryGrantAbilities(InOwer);
+		
 		bEquipped = true;
 	}
 }
 
-void UInventoryItemInstance::OnUnEquipped()
+void UInventoryItemInstance::OnUnEquipped(AActor* InOwer)
 {
 	if (ItemActor)
 	{
 		ItemActor->Destroy();
 		ItemActor = nullptr;
 	}
+	TryRemoveAbilities(InOwer);
 	// OnUnEquipped 函数只会在 背包component中 服务器上触发
 	bEquipped = false;
 }
 
-void UInventoryItemInstance::OnDropped()
+void UInventoryItemInstance::OnDropped(AActor* InOwer)
 {
 	if (ItemActor)
 	{
 		ItemActor->OnDropped();
 	}
+	TryRemoveAbilities(InOwer);
 	// OnUnEquipped 函数只会在 背包component中 服务器上触发
 	bEquipped = false;
+}
+
+// 只能服务器 赋予能力
+void UInventoryItemInstance::TryGrantAbilities(AActor* InOwner)
+{
+	if (InOwner && InOwner->HasAuthority())
+	{
+		if (UAbilitySystemComponent* AbilityComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InOwner))
+		{
+			// 从静态数据中赋予能力
+			const UItemStaticData* StaticData = GetItemStaticData();
+			for (auto ItemAbility : StaticData->GrantedAbilities)
+			{
+				// 开始  给予能力
+				GrantedAbilityHandles.Add(AbilityComponent->GiveAbility(FGameplayAbilitySpec(ItemAbility)));
+			}
+		}
+	}
+}
+
+void UInventoryItemInstance::TryRemoveAbilities(AActor* InOwner)
+{
+	if (InOwner && InOwner->HasAuthority())
+	{
+		if (UAbilitySystemComponent* AbilityComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InOwner))
+		{
+			// 从静态数据中赋予能力
+			const UItemStaticData* StaticData = GetItemStaticData();
+			for (auto AbilityHandle : GrantedAbilityHandles)
+			{
+				// 取消能力
+				AbilityComponent->ClearAbility(AbilityHandle);
+			}
+
+			GrantedAbilityHandles.Empty();
+		}
+	}
 }
 
 void UInventoryItemInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

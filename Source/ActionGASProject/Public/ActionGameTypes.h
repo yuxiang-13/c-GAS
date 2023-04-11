@@ -8,6 +8,7 @@
 #include "ActionGameTypes.generated.h"
 
 class AItemActor;
+class UGameplayEffect;
 
 USTRUCT(BlueprintType)
 struct FCharacterData
@@ -130,7 +131,30 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FCharacterAnimationData CharacterAnimationData;
+
+	// 新增道具可触发的GA
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<TSubclassOf<class UGameplayAbility>> GrantedAbilities;
 };
+
+UCLASS(BlueprintType, Blueprintable)
+class UWeaponStaticData : public UItemStaticData
+{
+	GENERATED_BODY()
+
+public:
+	// 伤害GE
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<UGameplayEffect> DamageEffect;
+	
+	// 武器骨骼 和 网格
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class USkeletalMesh* SkeletalMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UStaticMesh* StaticMesh;
+
+};
+
 
 UENUM()
 enum class EItemState: uint8

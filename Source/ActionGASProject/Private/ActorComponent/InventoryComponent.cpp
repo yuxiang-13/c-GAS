@@ -289,7 +289,7 @@ void UInventoryComponent::UnEquipItem()
 	{
 		if (IsValid(CurrentItem))
 		{
-			CurrentItem->OnUnEquipped();
+			CurrentItem->OnUnEquipped(GetOwner());
 			CurrentItem = nullptr;
 		}
 	}
@@ -302,7 +302,7 @@ void UInventoryComponent::DropItem()
 	{
 		if (IsValid(CurrentItem))
 		{
-			CurrentItem->OnDropped();
+			CurrentItem->OnDropped(GetOwner());
 			// 背包数据中移除这个元素
 			RemoveItem(CurrentItem->ItemStaticDataClass);
 			
