@@ -33,6 +33,7 @@ UGA_Jump::UGA_Jump()
 	*/
 
 	//1 InstancingPolicy 表示Gameplay Ability实例化策略的枚举值
+	// InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::NonInstanced;
 	/*
 		*enum Type
@@ -76,6 +77,7 @@ bool UGA_Jump::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 	 * 
 	 */
 	const ACharacter* Character = CastChecked<ACharacter>(ActorInfo->AvatarActor.Get(), ECastCheckedType::NullAllowed);
+	
 	return Character->CanJump();
 }
 

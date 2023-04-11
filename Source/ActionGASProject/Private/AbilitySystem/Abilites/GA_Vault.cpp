@@ -88,6 +88,9 @@ bool UGA_Vault::CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGame
 	FHitResult TraceHit;
 	// 跳跃的最大距离 (先设置成固定的，后需会根据 到障碍物的距离进行设置)
 	float MaxJumpDistance = HorizontalTraceLength;
+
+	// 第二次水平检测也成功才行，不然没高度
+	bool bJumpHorizontalLocationSet = false;
 	// 开始横向走线 从地面开始 并向上一层层的发射
 	for (; i < HorizontalTraceCount; ++i)
 	{
@@ -111,6 +114,7 @@ bool UGA_Vault::CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGame
 // 第二次循环，这个障碍物 是否别第二次 射线也检测到，检测成功，就可以初始化最大跳跃距离
 			} else if (JumpToLocationIdx == (i - 1))
 			{
+				bJumpHorizontalLocationSet = true;
 				// 这次循环表示： 脚前检测 确实有障碍物，并且射线检测高度提升一次后，也产生了碰撞
 				// 那就可以初始化这次 最大跳跃距离了（这个距离是 射线起始点 和 碰撞点 距离）是 float
 				MaxJumpDistance = FVector::Dist2D(TraceHit.Location, TraceStart);
@@ -132,7 +136,7 @@ bool UGA_Vault::CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGame
 		}
 	}
 
-	if (JumpToLocationIdx == INDEX_NONE)
+	if (!bJumpHorizontalLocationSet)
 	{
 		return false;
 	}
