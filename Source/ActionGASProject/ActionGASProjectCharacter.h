@@ -63,11 +63,13 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	
+	UInventoryComponent* GetInventoryComponent() const { return InventoryComponent;};
 public:
 	// 对自己应用GE
 	bool ApplyGameplayEffectToSelf(const TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext);
-public:
+
 	virtual void PawnClientRestart() override;
+
 protected:
 	// 授予  ->  能力 GA
 	void GiveAbilities();

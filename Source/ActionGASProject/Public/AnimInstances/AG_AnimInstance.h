@@ -6,14 +6,16 @@
 #include "Animation/AnimInstance.h"
 #include "AG_AnimInstance.generated.h"
 
-/**
- * 
- */
+
+class UItemStaticData;
+
 UCLASS()
 class ACTIONGASPROJECT_API UAG_AnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
 protected:
+	const UItemStaticData* GetEquippedItemData() const;
+	
 	// 返回 混合空间动画资源
 	// UFUNCTION(BlueprintCallable, meta=(NotBlueprintThreadSafe))
 	UFUNCTION(BlueprintCallable, meta=(BlueprintThreadSafe))
