@@ -183,6 +183,28 @@ void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent
 			PlayerEnhancedInputComponent->BindAction(SprintInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnSprintActionStart);
 			PlayerEnhancedInputComponent->BindAction(SprintInputAction, ETriggerEvent::Completed, this, &AActionGASProjectCharacter::OnSprintActionEnded);
 		}
+
+		// 道具
+		if (SprintInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(SprintInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnSprintActionStart);
+			PlayerEnhancedInputComponent->BindAction(SprintInputAction, ETriggerEvent::Completed, this, &AActionGASProjectCharacter::OnSprintActionEnded);
+		}
+
+
+		
+		if (EquipNextInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(EquipNextInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnEquipNextTriggered);
+		}
+		if (DropItemInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(DropItemInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnDropItemTriggered);
+		}
+		if (UnEquipInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(UnEquipInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnUnEquipTriggered);
+		}
 	}
 }
 
@@ -412,6 +434,30 @@ void AActionGASProjectCharacter::OnSprintActionEnded(const FInputActionValue& Va
 	{
 		AbilitySystemComponent->CancelAbilities(&SprintTags);
 	}
+}
+
+void AActionGASProjectCharacter::OnDropItemTriggered(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = UInventoryComponent::DropItemTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, UInventoryComponent::DropItemTag, EventPayload);
+}
+
+void AActionGASProjectCharacter::OnEquipNextTriggered(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = UInventoryComponent::EquipNextTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, UInventoryComponent::EquipNextTag, EventPayload);
+}
+
+void AActionGASProjectCharacter::OnUnEquipTriggered(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = UInventoryComponent::UnEquipTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, UInventoryComponent::UnEquipTag, EventPayload);
 }
 
 void AActionGASProjectCharacter::Landed(const FHitResult& Hit)

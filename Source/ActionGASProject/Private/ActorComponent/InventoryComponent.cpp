@@ -11,6 +11,7 @@
 #include "Abilities/GameplayAbilityTypes.h"
 #include "Engine/ActorChannel.h"
 #include "Inventory/InventoryItemInstance.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 /*
@@ -50,13 +51,17 @@ UInventoryComponent::UInventoryComponent()
 	// ...
 
 	// 为游戏增加GameplayTags的代理，在 游戏启动时自动触发
-	UGameplayTagsManager().Get().OnLastChanceToAddNativeTags().AddUObject(this, &UInventoryComponent::AddInventoryTags);
+	// 注意 是 UGameplayTagsManager::::Get() 不是 UGameplayTagsManager（）.Get()
+	UGameplayTagsManager::Get().OnLastChanceToAddNativeTags().AddUObject(this, &UInventoryComponent::AddInventoryTags);
 }
 
 void UInventoryComponent::AddInventoryTags()
 {
 	UGameplayTagsManager& TagsManager = UGameplayTagsManager::Get();
-
+	/**
+	*将给定的名称注册为游戏标签，并跟踪它是否直接从代码中引用
+	*这只能在引擎初始化期间调用，复制之前需要锁定表
+	*/
 	UInventoryComponent::EquipItemActorTag = TagsManager.AddNativeGameplayTag(TEXT("Event.Inventory.EquipItem"), TEXT("Equip Item Form Item Actor Event"));
 	UInventoryComponent::DropItemTag = TagsManager.AddNativeGameplayTag(TEXT("Event.Inventory.DropItem"), TEXT("Drop Equipped Item"));
 	UInventoryComponent::EquipNextTag = TagsManager.AddNativeGameplayTag(TEXT("Event.Inventory.EquipNext"), TEXT("Try Equip Next Item"));
@@ -129,8 +134,8 @@ void UInventoryComponent::HandleGameplayEventInternal(FGameplayEventData PayLoad
 	if (NetRole == ROLE_Authority)
 	{
 		// 获取事件中的 Tag
-		FGameplayTag EventTag = PayLoad.EventTag;
-		if (EventTag == UInventoryComponent::EquipItemTag)
+		// FGameplayTag EventTag = PayLoad.EventTag;
+		if (PayLoad.EventTag == UInventoryComponent::EquipItemActorTag)
 		{
 			if (const UInventoryItemInstance* ItemInstance = Cast<UInventoryItemInstance>(PayLoad.OptionalObject))
 			{
@@ -140,16 +145,16 @@ void UInventoryComponent::HandleGameplayEventInternal(FGameplayEventData PayLoad
 				if (PayLoad.Instigator)
 				{
 					// AItemActor::OnSphereOverlap 转 this，我们要删除他
-					const_cast<AActor*>(PayLoad.Instigator)->Destroy();
+					const_cast<AActor*>(PayLoad.Instigator.Get())->Destroy();
 				}
 			}
-		} else if (EventTag == UInventoryComponent::EquipNextTag)
+		} else if (PayLoad.EventTag == UInventoryComponent::EquipNextTag)
 		{
 			EquipNext();
-		} else if (EventTag == UInventoryComponent::DropItemTag)
+		} else if (PayLoad.EventTag == UInventoryComponent::DropItemTag)
 		{
 			DropItem();
-		} else if (EventTag == UInventoryComponent::UnEquipTag)
+		} else if (PayLoad.EventTag == UInventoryComponent::UnEquipTag)
 		{
 			UnEquipItem();
 		} 
@@ -201,9 +206,8 @@ void UInventoryComponent::EquipNext()
 	TArray<FInventoryListItem>& Items = InventoryList.GetItemsRef();
 
 	const bool bNoItems = Items.Num() == 0;
-	const bool bOneAndEquipped = Items.Num() == 1 && CurrentItem;
 
-	if (bNoItems || bOneAndEquipped) return;
+	if (bNoItems) return;
 
 	UInventoryItemInstance* TargetItem = CurrentItem;
 	// 有些物品无法装备，所以需要遍历,找出合适的装备
@@ -221,16 +225,32 @@ void UInventoryComponent::EquipNext()
 		}
 	}
 
-	if (CurrentItem)
+	if (CurrentItem == TargetItem)
 	{
-		if (CurrentItem == TargetItem)
+		return;
+	} else
+	{
+		// 卸载老装备
+		UnEquipItem();	
+		EquipItemInstance(TargetItem);	
+	}
+}
+
+// 通过参数判断背包中是否存在此装备，再进行穿戴
+void UInventoryComponent::EquipItemInstance(UInventoryItemInstance* InItemInstance)
+{	
+	// 只在服务器上初始化
+	if (GetOwner()->HasAuthority())
+	{		
+		for (auto Item : InventoryList.GetItemsRef())
 		{
-			return;
-		} else
-		{
-			// 卸载老装备
-			UnEquipItem();
-			EquipItemInstance(CurrentItem);
+			if (Item.ItemInstance == InItemInstance)
+			{
+				// 直接触发 背包元素的 装戴虚方法
+				Item.ItemInstance->OnEquipped(GetOwner());
+				CurrentItem = Item.ItemInstance;
+				break;
+			}
 		}
 	}
 }
@@ -252,25 +272,6 @@ void UInventoryComponent::EquipItem(TSubclassOf<UItemStaticData> InItemStaticDat
 		for (auto Item : InventoryList.GetItemsRef())
 		{
 			if (Item.ItemInstance->ItemStaticDataClass == InItemStaticDataClass)
-			{
-				// 直接触发 背包元素的 装戴虚方法
-				Item.ItemInstance->OnEquipped(GetOwner());
-				CurrentItem = Item.ItemInstance;
-				break;
-			}
-		}
-	}
-}
-
-// 通过参数判断背包中是否存在此装备，再进行穿戴
-void UInventoryComponent::EquipItemInstance(UInventoryItemInstance* InItemInstance)
-{
-	// 只在服务器上初始化
-	if (GetOwner()->HasAuthority())
-	{
-		for (auto Item : InventoryList.GetItemsRef())
-		{
-			if (Item.ItemInstance == InItemInstance)
 			{
 				// 直接触发 背包元素的 装戴虚方法
 				Item.ItemInstance->OnEquipped(GetOwner());
@@ -327,10 +328,18 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 		{
 			// 获取实例
 			UInventoryItemInstance* ItemInstance = Item.ItemInstance;
-			if (IsValid(ItemInstance))
+			const UItemStaticData* ItemStaticData = ItemInstance->GetItemStaticData();
+			if (IsValid(ItemInstance) && IsValid(ItemStaticData))
 			{
-				// 获取默认 成员对象
-				const UItemStaticData* ItemStaticData =  ItemInstance->GetItemStaticData();
+				if (GetOwner()->HasAuthority())
+				{
+					// 获取默认 成员对象
+					GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Blue,FString::Printf(TEXT(" server Item: %s"), *ItemStaticData->Name.ToString()));
+				} else
+				{
+					// 获取默认 成员对象
+					GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Blue,FString::Printf(TEXT(" client Item: %s"), *ItemStaticData->Name.ToString()));
+				}
 			}
 		}
 	}

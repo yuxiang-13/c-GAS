@@ -27,7 +27,7 @@ struct FCharacterData
 
 	// 动画数据资产
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Animation")
-	class UCharacterAnimDataAsset* CharacterAnimDataAsset;
+	class UCharacterAnimDataAsset* CharacterAnimDataAsset = nullptr;
 };
 
 

@@ -53,13 +53,17 @@ protected:
 	UPROPERTY()
 	USphereComponent* SphereComponent = nullptr;
 
+
+	// 广播开启碰撞
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastCollisionEnabled(bool bFlag);
+
+
 	//DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_SixParams( FComponentBeginOverlapSignature, UPrimitiveComponent, OnComponentBeginOverlap,
 	// UPrimitiveComponent*, OverlappedComponent, AActor*, OtherActor, UPrimitiveComponent*, OtherComp, int32, OtherBodyIndex, bool, bFromSweep, const FHitResult &, SweepResult);
 
 	UFUNCTION()
 	void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
-
-	FGameplayTag OverlapEventTag;
 
 	// 声明一个静态数据类
 	UPROPERTY(EditDefaultsOnly)

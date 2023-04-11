@@ -6,6 +6,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Abilities/GameplayAbilityTypes.h"
+#include "ActorComponent/InventoryComponent.h"
 #include "Components/SphereComponent.h"
 #include "Engine/ActorChannel.h"
 #include "Net/UnrealNetwork.h"
@@ -38,12 +39,13 @@ void AItemActor::OnEquipped()
 {
 	ItemState = EItemState::Equipped;
 
-	SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	MulticastCollisionEnabled(false);
 };
 void AItemActor::OnUnEquipped()
 {
 	ItemState = EItemState::None;
-	SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MulticastCollisionEnabled(false);
 };
 // 丢弃
 void AItemActor::OnDropped()
@@ -70,7 +72,7 @@ void AItemActor::OnDropped()
 		TArray<AActor*> ActorsToIgnore = {ActorOwner};
 		FHitResult TraceHit;
 
-		static const auto CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("ShowDebugTraversal"));
+		static const auto CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("ShowDebugInventory"));
 		const bool bShowTraversal = CVar->GetInt() > 0;
 		EDrawDebugTrace::Type DebugDrawType = bShowTraversal ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None;
 
@@ -86,11 +88,8 @@ void AItemActor::OnDropped()
 			}
 		}
 		SetActorLocation(TargetLocation);
-	
-		SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		// 是否生成重叠事件（Overlap Event）。其中，`true`表示要开启碰撞重叠事件的生成，`false`表示不开启。
-		// 开启碰撞查询
-		SphereComponent->SetGenerateOverlapEvents(true);
+
+		MulticastCollisionEnabled(true);
 	}
 
 };
@@ -121,24 +120,39 @@ void AItemActor::BeginPlay()
 		{
 			ItemInstance = NewObject<UInventoryItemInstance>();
 			ItemInstance->Init(ItemStaticDataClass);
+			
+			MulticastCollisionEnabled(true);
 		}
 	}
+}
 
-	// C  S 都启动碰撞
-	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	// 是否生成重叠事件（Overlap Event）。其中，`true`表示要开启碰撞重叠事件的生成，`false`表示不开启。
-	// 开启碰撞查询
-	SphereComponent->SetGenerateOverlapEvents(true);
+void AItemActor::MulticastCollisionEnabled_Implementation(bool bFlag)
+{
+	if (bFlag)
+	{
+		SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		// 是否生成重叠事件（Overlap Event）。其中，`true`表示要开启碰撞重叠事件的生成，`false`表示不开启。
+		// 开启碰撞查询
+		SphereComponent->SetGenerateOverlapEvents(true);
+	} else
+	{
+		SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
 
 void AItemActor::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                                 UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	FGameplayEventData EventPlayload;
-	// OptionalObject 任意对象
-	EventPlayload.OptionalObject = this; // this, 表示当前道具，已经开启了网络复制，所以ok
+	if (HasAuthority())
+	{
+		FGameplayEventData EventPlayload;
+		EventPlayload.Instigator = this;
+		// OptionalObject 任意对象
+		EventPlayload.OptionalObject = ItemInstance; // 指向背包元素的指针
+		EventPlayload.EventTag = UInventoryComponent::EquipItemActorTag;
 
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(OtherActor, OverlapEventTag, EventPlayload);
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(OtherActor, UInventoryComponent::EquipItemActorTag, EventPlayload);
+	}
 }
 
 // Called every frame

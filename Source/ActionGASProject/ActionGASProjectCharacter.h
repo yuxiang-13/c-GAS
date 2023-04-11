@@ -148,12 +148,17 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly)
 	UInputAction* JumpInputAction;
-	
 	UPROPERTY(EditDefaultsOnly)
 	UInputAction* CrouchInputAction;
-
 	UPROPERTY(EditDefaultsOnly)
 	UInputAction* SprintInputAction;
+	
+	UPROPERTY(EditDefaultsOnly)
+	UInputAction* EquipNextInputAction;
+	UPROPERTY(EditDefaultsOnly)
+	UInputAction* DropItemInputAction;
+	UPROPERTY(EditDefaultsOnly)
+	UInputAction* UnEquipInputAction;
 	
 	void OnMoveForwardAction(const FInputActionValue& Value);
 	void OnMoveRightAction(const FInputActionValue& Value);
@@ -169,6 +174,11 @@ protected:
 	// 冲刺
 	void OnSprintActionStart(const FInputActionValue& Value);
 	void OnSprintActionEnded(const FInputActionValue& Value);
+
+	
+	void OnEquipNextTriggered(const FInputActionValue& Value);
+	void OnDropItemTriggered(const FInputActionValue& Value);
+	void OnUnEquipTriggered(const FInputActionValue& Value);
 
 	// 重写 着陆的 命中事件  降落时调用，根据命中结果执行操作。触发OnLanded事件
 	virtual void Landed(const FHitResult& Hit) override;
