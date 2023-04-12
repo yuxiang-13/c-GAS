@@ -161,6 +161,10 @@ protected:
 	UInputAction* DropItemInputAction;
 	UPROPERTY(EditDefaultsOnly)
 	UInputAction* UnEquipInputAction;
+
+	
+	UPROPERTY(EditDefaultsOnly)
+	UInputAction* AttackInputAction;
 	
 	void OnMoveForwardAction(const FInputActionValue& Value);
 	void OnMoveRightAction(const FInputActionValue& Value);
@@ -188,7 +192,19 @@ protected:
 	// 覆盖 开始下蹲 下蹲结束
 	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
 	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+
+	
+	// 射击
+	void OnAttackActionStart(const FInputActionValue& Value);
+	void OnAttackActionEnded(const FInputActionValue& Value);
 protected:
+	// 射击GA 开始结束 Tag
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag AttackStartedEventTag;
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag AttackEndedEventTag;
+
+	
 	//用于触发 Gameplay Event 的 Tags 
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag JumpEVentTag;
@@ -208,7 +224,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UGameplayEffect> CrouchStateEffect;
 
-
+	
 protected:
 	FDelegateHandle MaxMovementSpeedChangedDelegateHandle;
 

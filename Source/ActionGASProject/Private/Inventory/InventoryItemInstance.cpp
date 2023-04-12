@@ -77,6 +77,11 @@ void UInventoryItemInstance::OnDropped(AActor* InOwer)
 	bEquipped = false;
 }
 
+AItemActor* UInventoryItemInstance::GetItemActor() const
+{
+	return ItemActor;
+}
+
 // 只能服务器 赋予能力
 void UInventoryItemInstance::TryGrantAbilities(AActor* InOwner)
 {

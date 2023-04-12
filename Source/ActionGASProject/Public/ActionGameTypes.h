@@ -9,6 +9,7 @@
 
 class AItemActor;
 class UGameplayEffect;
+class UAnimMontage;
 
 USTRUCT(BlueprintType)
 struct FCharacterData
@@ -153,6 +154,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	class UStaticMesh* StaticMesh;
 
+	// 射击蒙太奇
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimMontage* AttackMontage;
 };
 
 

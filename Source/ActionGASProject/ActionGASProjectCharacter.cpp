@@ -205,6 +205,13 @@ void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent
 		{
 			PlayerEnhancedInputComponent->BindAction(UnEquipInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnUnEquipTriggered);
 		}
+
+		// 射击
+		if (AttackInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(AttackInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnAttackActionStart);
+			PlayerEnhancedInputComponent->BindAction(AttackInputAction, ETriggerEvent::Completed, this, &AActionGASProjectCharacter::OnAttackActionEnded);
+		}
 	}
 }
 
@@ -509,6 +516,22 @@ void AActionGASProjectCharacter::OnEndCrouch(float HalfHeightAdjust, float Scale
 	}
 	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
 	
+}
+
+void AActionGASProjectCharacter::OnAttackActionStart(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = AttackStartedEventTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AttackStartedEventTag, EventPayload);
+}
+
+void AActionGASProjectCharacter::OnAttackActionEnded(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = AttackEndedEventTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AttackEndedEventTag, EventPayload);
 }
 
 

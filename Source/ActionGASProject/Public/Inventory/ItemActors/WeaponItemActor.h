@@ -17,6 +17,9 @@ public:
 
 	const UWeaponStaticData* GetWeaponStaticData() const;
 
+	// 获取枪口位置
+	UFUNCTION(BlueprintPure)
+	FVector GetMuzzleLocation() const;
 protected:
 	UPROPERTY()
 	UMeshComponent* MeshComponent = nullptr;
