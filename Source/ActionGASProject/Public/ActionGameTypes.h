@@ -136,6 +136,10 @@ public:
 	// 新增道具可触发的GA
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<TSubclassOf<class UGameplayAbility>> GrantedAbilities;
+
+	// 道具装备时 的GE
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<TSubclassOf<UGameplayEffect>> OngoingEffects;
 };
 
 UCLASS(BlueprintType, Blueprintable)
@@ -166,4 +170,14 @@ enum class EItemState: uint8
 	None UMETA(DisplayName = "None"),
 	Equipped UMETA(DisplayName = "Equipped"),
 	Dropped UMETA(DisplayName = "Dropped"),
+};
+
+
+// 移动方向
+UENUM()
+enum class EMovementDirectionType: uint8
+{
+	None UMETA(DisplayName = "None"),
+	OrientToMovement UMETA(DisplayName = "OrientToMovement"),
+	Strafe UMETA(DisplayName = "Strafe"),
 };

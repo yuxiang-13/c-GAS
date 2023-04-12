@@ -5,6 +5,7 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystemLog.h"
 #include "ActionGameStatic.h"
 #include "Actors/ItemActor.h"
 #include "GameFramework/Character.h"
@@ -49,7 +50,7 @@ void UInventoryItemInstance::OnEquipped(AActor* InOwer)
 		}
 		
 		TryGrantAbilities(InOwer);
-		
+		TryApplyEffects(InOwer);
 		bEquipped = true;
 	}
 }
@@ -64,6 +65,7 @@ void UInventoryItemInstance::OnUnEquipped(AActor* InOwer)
 	TryRemoveAbilities(InOwer);
 	// OnUnEquipped 函数只会在 背包component中 服务器上触发
 	bEquipped = false;
+	TryRemoveEffects(InOwer);
 }
 
 void UInventoryItemInstance::OnDropped(AActor* InOwer)
@@ -75,6 +77,7 @@ void UInventoryItemInstance::OnDropped(AActor* InOwer)
 	TryRemoveAbilities(InOwer);
 	// OnUnEquipped 函数只会在 背包component中 服务器上触发
 	bEquipped = false;
+	TryRemoveEffects(InOwer);
 }
 
 AItemActor* UInventoryItemInstance::GetItemActor() const
@@ -116,6 +119,57 @@ void UInventoryItemInstance::TryRemoveAbilities(AActor* InOwner)
 
 			GrantedAbilityHandles.Empty();
 		}
+	}
+}
+
+void UInventoryItemInstance::TryApplyEffects(AActor* InOwner)
+{
+	if (UAbilitySystemComponent* AbilityComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InOwner))
+	{
+		const UItemStaticData* ItemStaticData = GetItemStaticData();
+		
+		// 创建GE内容句柄
+		FGameplayEffectContextHandle EffectContext = AbilityComponent->MakeEffectContext();
+		
+		for (auto GameplayEffect : ItemStaticData->OngoingEffects)
+		{
+			// 检查是否有效
+			if (!GameplayEffect.Get()) continue;
+
+			// GE实例化
+			FGameplayEffectSpecHandle SpecHandle = AbilityComponent->MakeOutgoingSpec(GameplayEffect, 1, EffectContext);
+			if (SpecHandle.IsValid())
+			{
+				//激活 GE Spec实例 也就 获得了这个 FActiveGameplayEffectHandle
+				FActiveGameplayEffectHandle ActiveGEHandle = AbilityComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+
+				// 如果没成功 添加一条消息打印
+				if (!ActiveGEHandle.WasSuccessfullyApplied())
+				{
+					ABILITY_LOG(Log, TEXT("Item %s Failed to apply runtime Effect %s"), *GetName(), *GetNameSafe(GameplayEffect));
+					// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT(" Failed to apply jump effect! %s"), * GetNameSafe(Character)) , true, true, FLinearColor::Red, 10.f);
+				} else
+				{
+					OnGoingEffectHandles.Add(ActiveGEHandle);
+				}
+			}
+		}
+	}
+}
+
+void UInventoryItemInstance::TryRemoveEffects(AActor* InOwner)
+{
+	if (UAbilitySystemComponent* AbilityComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InOwner))
+	{
+		for (FActiveGameplayEffectHandle ActiveEffectHandle: OnGoingEffectHandles)
+		{
+			if (ActiveEffectHandle.IsValid())
+			{
+				AbilityComponent->RemoveActiveGameplayEffect(ActiveEffectHandle);
+			}
+		}
+
+		OnGoingEffectHandles.Empty();
 	}
 }
 

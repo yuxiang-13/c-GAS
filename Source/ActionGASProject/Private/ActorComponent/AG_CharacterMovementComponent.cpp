@@ -3,7 +3,9 @@
 
 #include "ActorComponent//AG_CharacterMovementComponent.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "GameFramework/Character.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 /*
@@ -43,9 +45,86 @@ bool UAG_CharacterMovementComponent::TryTraversal(UAbilitySystemComponent* ASC)
 	return false;
 }
 
+void UAG_CharacterMovementComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	HandleMovementDirection();
+	if (UAbilitySystemComponent* AbilityComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner()))
+	{
+		// AbilityComponent->RegisterGameplayTagEvent是在AbilityComponent上注册GameplayTag事件的一个函数。该函数可以用于监听GameplayTag的变化
+		FOnGameplayEffectTagCountChanged& GameplayEffectTagCountChanged = AbilityComponent->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("Movemnt.Enforced.Strafe"), EGameplayTagEventType::NewOrRemoved));
+		GameplayEffectTagCountChanged.AddUObject(this, &UAG_CharacterMovementComponent::OnEnforcedStrafeTagChange);
+	}
+}
+
+void UAG_CharacterMovementComponent::OnEnforcedStrafeTagChange(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("eeeeeee - ->>>> %d"), NewCount) , true, true, FLinearColor::Red, 10.f);
+
+	//NewCount生效 时是 1   被移除后是 0
+	if (NewCount)
+	{
+		SetMovementDirectionType(EMovementDirectionType::Strafe);
+	} else
+	{
+		SetMovementDirectionType(EMovementDirectionType::OrientToMovement);
+	}
+}
+
 void UAG_CharacterMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
+                                                   FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 }
+
+EMovementDirectionType UAG_CharacterMovementComponent::GetMovementDirectionType() const
+{
+	return MovementDirectionType;
+}
+
+void UAG_CharacterMovementComponent::SetMovementDirectionType(EMovementDirectionType InMovementDirectionType)
+{
+	MovementDirectionType = InMovementDirectionType;
+
+	HandleMovementDirection();
+}
+
+void UAG_CharacterMovementComponent::HandleMovementDirection()
+{
+	switch (MovementDirectionType)
+	{
+	case EMovementDirectionType::Strafe:
+		{
+			bUseControllerDesiredRotation = true;
+			bOrientRotationToMovement = false;
+			CharacterOwner.Get()->bUseControllerRotationYaw = true;
+		}
+		break;
+	default:
+		bUseControllerDesiredRotation = false;
+		bOrientRotationToMovement = true;
+		CharacterOwner.Get()->bUseControllerRotationYaw = false;
+		break;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -13,6 +13,7 @@
 
 class UItemStaticData;
 class AItemActor;
+class UGameplayEffect;
 
 // 把这个暴漏给蓝图
 UCLASS(BlueprintType, Blueprintable)
@@ -58,7 +59,17 @@ protected:
 	// 移除能力
 	void TryRemoveAbilities(AActor* InOwner);
 
-	// 能力实力的句柄
+	// 道具被装备时 应用GE
+	// 赋予能力
+	void TryApplyEffects(AActor* InOwner);
+	// 移除能力
+	void TryRemoveEffects(AActor* InOwner);
+	
+	// GE
+	UPROPERTY()
+	TArray<FActiveGameplayEffectHandle> OnGoingEffectHandles;
+	
+	// GE实力的句柄
 	UPROPERTY()
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilityHandles;
 	
