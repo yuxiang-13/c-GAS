@@ -161,6 +161,10 @@ public:
 	// 射击蒙太奇
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UAnimMontage* AttackMontage;
+
+	// 射击间隔
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float FireRate;
 };
 
 
@@ -181,3 +185,5 @@ enum class EMovementDirectionType: uint8
 	OrientToMovement UMETA(DisplayName = "OrientToMovement"),
 	Strafe UMETA(DisplayName = "Strafe"),
 };
+
+
