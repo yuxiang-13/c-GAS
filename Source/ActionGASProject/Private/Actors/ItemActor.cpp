@@ -61,13 +61,9 @@ void AItemActor::Init(UInventoryItemInstance* InInstance)
 
 
 
-void AItemActor::OnRep_ItemInstance(UInventoryItemInstance* OldItemInstance)
+void AItemActor::OnRep_ItemInstance()
 {
-	// 保护
-	if (IsValid(ItemInstance) && IsValid(OldItemInstance))
-	{
-		InitInternal();
-	}
+	InitInternal();
 }
 
 void AItemActor::InitInternal()

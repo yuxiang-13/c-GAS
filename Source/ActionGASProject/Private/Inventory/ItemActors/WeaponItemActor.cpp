@@ -3,6 +3,7 @@
 
 #include "Inventory/ItemActors/WeaponItemActor.h"
 
+#include "GameFramework/Character.h"
 #include "Inventory/InventoryItemInstance.h"
 
 AWeaponItemActor::AWeaponItemActor()
@@ -29,18 +30,33 @@ void AWeaponItemActor::InitInternal()
 				// 注册 注册后actor才能进行获取以及其他操作
 				SkeletalComp->RegisterComponent();
 				SkeletalComp->SetSkeletalMesh(WeaponData->SkeletalMesh);
-				SkeletalComp->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 
 				MeshComponent = SkeletalComp;
+				if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+				{
+					MeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData->Name);
+				} else
+				{
+					MeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+				}
 			}
 		} else if (WeaponData->StaticMesh)
 		{
 			UStaticMeshComponent* StaticComp = NewObject<UStaticMeshComponent>(this, UStaticMeshComponent::StaticClass(), TEXT("MeshComponent"));
 			StaticComp->RegisterComponent();
 			StaticComp->SetStaticMesh(WeaponData->StaticMesh);
-			StaticComp->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
+			StaticComp->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 			
 			MeshComponent = StaticComp;
+			if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+			{
+				MeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData->Name);
+			} else
+			{
+				MeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			}
 		}
 	}
+
+	
 }

@@ -48,9 +48,8 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_ItemInstance)
 	UInventoryItemInstance* ItemInstance = nullptr;
 
-	// 1 注意：这个同步的变量在服务器端发生改变后，第一步是该变量的新值将传输到客户端。然后客户端接收到新值后，才会触发`ReplicatedUsing`函数
 	UFUNCTION()
-	void OnRep_ItemInstance(UInventoryItemInstance* OldItemInstance);
+	void OnRep_ItemInstance();
 
 	// 提供子类虚方法，当道具被装备时进行触发
 	virtual void InitInternal();
