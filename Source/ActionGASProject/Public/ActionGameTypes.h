@@ -165,6 +165,10 @@ public:
 	// 射击间隔
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float FireRate;
+	
+	// 基础伤害
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float BaseDamage;
 };
 
 

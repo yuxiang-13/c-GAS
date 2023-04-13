@@ -41,8 +41,15 @@ public:
 	// AActionGASProjectCharacter();
 	AActionGASProjectCharacter(const FObjectInitializer& ObjectInitializer);
 
+	virtual void BeginPlay() override;
+
 	virtual void Tick(float DeltaSeconds) override;
+
+	// https://www.cnblogs.com/CatSevenMillion/p/16653763.html
+	// PostInitializeComponents 是Actor组件初始化完毕
 	virtual void PostInitializeComponents() override;
+	// PostLoad是在Actor的资源执行加载 完成 后 调用
+	virtual void PostLoad() override;
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 

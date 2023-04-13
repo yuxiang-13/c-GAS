@@ -105,6 +105,20 @@ AActionGASProjectCharacter::AActionGASProjectCharacter(const FObjectInitializer&
 	InventoryComponent->SetIsReplicated(true);
 }
 
+void AActionGASProjectCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// TODO:测试 用，一会删掉
+	if (!Cast<APlayerController>(GetController()) && ! HasAuthority())
+	{
+		UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-aaaaa - ->>>> %s"), *GetName()) , true, true, FLinearColor::Red, 10.f);
+
+		// 初始化 客户端  GAS
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
+}
+
 void AActionGASProjectCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -120,9 +134,14 @@ void AActionGASProjectCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	// 这个 客户端服务器都会触发，必要都触发，因为两边都要初始化CharacterData。尤其是第一次初始化，
-	//不能完全依照RPC让客户端等待服务器下发，因为不是同步的东西，很可能服务器下发时候，你客户端还没创建完成
-	// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-0000 - ->>>> %f"), 0.0f) , true, true, FLinearColor::Red, 10.f);
+}
+
+void AActionGASProjectCharacter::PostLoad()
+{
+	Super::PostLoad();
+	// 筛选出 序列化的（拖到场景内的  以及 继续启动时 触发）
+	// UE_LOG(LogTemp, Warning, TEXT("---fff>>>> 111   sssPostLoadPostLoadPostLoadPostLoadPostLoad"));
+	
 	// 根据数据资产 初始化 角色数据
 	if (IsValid(CharacterDataAsset))
 	{
@@ -225,6 +244,8 @@ void AActionGASProjectCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	
+	// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-aaaaa - ->>>> %s"), *GetName()) , true, true, FLinearColor::Red, 10.f);
+	
 	// 只在服务器执行此函数
 	// 初始化 服务器  GAS
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
@@ -267,8 +288,11 @@ void AActionGASProjectCharacter::ApplyStartupEffects()
 	}
 }
 
+// 当使用AIControl控制Character时，不会触发Character的OnRep_PlayerState函数。这是因为PlayerState是与PlayerController（玩家控制器）相关联的
 void AActionGASProjectCharacter::OnRep_PlayerState()
 {
+	// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-bbbbbb - ->>>> %s"), *GetName()) , true, true, FLinearColor::Red, 10.f);
+	
 	Super::OnRep_PlayerState();
 	// 初始化 客户端  GAS
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
@@ -483,8 +507,6 @@ void AActionGASProjectCharacter::OnStartCrouch(float HalfHeightAdjust, float Sca
 	// 检查是否有效
 	if (!CrouchStateEffect.Get()) return;
 
-	UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-0000 - ->>>> %f"), 0.0f) , true, true, FLinearColor::Red, 10.f);
-	
 	if (AbilitySystemComponent)
 	{
 		// 创建GE内容句柄
