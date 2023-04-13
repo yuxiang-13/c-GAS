@@ -168,10 +168,12 @@ protected:
 	UInputAction* DropItemInputAction;
 	UPROPERTY(EditDefaultsOnly)
 	UInputAction* UnEquipInputAction;
-
 	
 	UPROPERTY(EditDefaultsOnly)
 	UInputAction* AttackInputAction;
+	
+	UPROPERTY(EditDefaultsOnly)
+	UInputAction* AnimInputAction;
 	
 	void OnMoveForwardAction(const FInputActionValue& Value);
 	void OnMoveRightAction(const FInputActionValue& Value);
@@ -204,7 +206,18 @@ protected:
 	// 射击
 	void OnAttackActionStart(const FInputActionValue& Value);
 	void OnAttackActionEnded(const FInputActionValue& Value);
+	
+	// 瞄准
+	void OnAimActionStart(const FInputActionValue& Value);
+	void OnAimActionEnded(const FInputActionValue& Value);
 protected:
+	// 瞄准GA 开始结束 Tag
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag AimStartedEventTag;
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag AimEndedEventTag;
+
+	
 	// 射击GA 开始结束 Tag
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag AttackStartedEventTag;

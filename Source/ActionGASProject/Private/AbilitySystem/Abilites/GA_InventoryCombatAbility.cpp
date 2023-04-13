@@ -6,6 +6,9 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "ActionGASProject/ActionGASProjectCharacter.h"
+#include "Camera/CameraComponent.h"
+#include "Inventory/ItemActors/WeaponItemActor.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 FGameplayEffectSpecHandle UGA_InventoryCombatAbility::GetWeaponEffectSpec(const FHitResult& InHitResult)
@@ -27,4 +30,32 @@ FGameplayEffectSpecHandle UGA_InventoryCombatAbility::GetWeaponEffectSpec(const 
 		}
 	}
 	return FGameplayEffectSpecHandle();
+}
+
+const bool UGA_InventoryCombatAbility::GetWeaponToFocusTraceResult(float TraceDistance, ETraceTypeQuery TraceType,
+	FHitResult& OutHitResult)
+{
+	AWeaponItemActor* WeaponItemActor = GetEquippedWeaponItemActor();
+	AActionGASProjectCharacter* ActionCharacter = GetActionGameCharacterFromActorInfo();
+	// 获取角色摄像机位置
+	const FTransform& CameraTransform = ActionCharacter->GetFollowCamera()->GetComponentTransform();
+
+	// 摄像机（朝向）终点位置
+	const FVector FocusTraceEnd = CameraTransform.GetLocation() + CameraTransform.GetRotation().Vector() * TraceDistance;
+	// 射线忽略
+	TArray<AActor*> ActorsToIgnore = { GetAvatarActorFromActorInfo() };
+
+	FHitResult FocusHit;
+	// 注意，参数是 FocusHit
+	UKismetSystemLibrary::LineTraceSingle(this, CameraTransform.GetLocation(), FocusTraceEnd, TraceType, false, ActorsToIgnore, EDrawDebugTrace::None, FocusHit, true);
+
+
+	// 枪口位置
+	FVector MuzzleLocation = WeaponItemActor->GetMuzzleLocation();
+	// 枪口位置 + 枪口朝向摄像机碰撞点位置的单位向量 * 距离
+	const FVector WeaponTraceEnd = MuzzleLocation + (FocusHit.Location - MuzzleLocation).GetSafeNormal() * TraceDistance;
+	// 注意，参数是 OutHitResult
+	UKismetSystemLibrary::LineTraceSingle(this, MuzzleLocation, WeaponTraceEnd, TraceType, false, ActorsToIgnore, EDrawDebugTrace::None, OutHitResult, true);
+
+	return OutHitResult.bBlockingHit;
 }

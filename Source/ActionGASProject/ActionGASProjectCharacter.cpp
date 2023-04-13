@@ -220,6 +220,13 @@ void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent
 			PlayerEnhancedInputComponent->BindAction(AttackInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnAttackActionStart);
 			PlayerEnhancedInputComponent->BindAction(AttackInputAction, ETriggerEvent::Completed, this, &AActionGASProjectCharacter::OnAttackActionEnded);
 		}
+
+		// 瞄准
+		if (AnimInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(AnimInputAction, ETriggerEvent::Started, this, &AActionGASProjectCharacter::OnAimActionStart);
+			PlayerEnhancedInputComponent->BindAction(AnimInputAction, ETriggerEvent::Completed, this, &AActionGASProjectCharacter::OnAimActionEnded);
+		}
 	}
 }
 
@@ -543,6 +550,22 @@ void AActionGASProjectCharacter::OnAttackActionEnded(const FInputActionValue& Va
 	EventPayload.EventTag = AttackEndedEventTag;
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AttackEndedEventTag, EventPayload);
+}
+
+void AActionGASProjectCharacter::OnAimActionStart(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = AimStartedEventTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AimStartedEventTag, EventPayload);
+}
+
+void AActionGASProjectCharacter::OnAimActionEnded(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = AimEndedEventTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AimEndedEventTag, EventPayload);
 }
 
 

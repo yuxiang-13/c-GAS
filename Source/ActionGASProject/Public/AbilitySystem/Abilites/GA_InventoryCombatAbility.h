@@ -17,4 +17,8 @@ public:
 	// 获取GE实例
 	UFUNCTION(BlueprintPure)
 	FGameplayEffectSpecHandle GetWeaponEffectSpec(const FHitResult& InHitResult);
+
+	// 武器射线检测
+	UFUNCTION(BlueprintPure)
+	const bool GetWeaponToFocusTraceResult(float TraceDistance, ETraceTypeQuery TraceType, FHitResult& OutHitResult);
 };

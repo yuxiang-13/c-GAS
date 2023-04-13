@@ -112,11 +112,11 @@ void AWeaponItemActor::PlayWeaponEffectsIternal(const FHitResult& InHitResult)
 
 			UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, PhysicalMaterial->PointImpactVFX, InHitResult.ImpactPoint);
 		}
+	}
 
-		// 武器声
-		if (const UWeaponStaticData* weaponData = GetWeaponStaticData())
-		{
-			UGameplayStatics::PlaySoundAtLocation(this, weaponData->AttackSound, GetActorLocation(), 0.2f);
-		}
+	// 无论是否命中 武器声
+	if (const UWeaponStaticData* weaponData = GetWeaponStaticData())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, weaponData->AttackSound, GetActorLocation(), 0.2f);
 	}
 }
