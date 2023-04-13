@@ -108,15 +108,6 @@ AActionGASProjectCharacter::AActionGASProjectCharacter(const FObjectInitializer&
 void AActionGASProjectCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// TODO:测试 用，一会删掉
-	if (!Cast<APlayerController>(GetController()) && ! HasAuthority())
-	{
-		UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-aaaaa - ->>>> %s"), *GetName()) , true, true, FLinearColor::Red, 10.f);
-
-		// 初始化 客户端  GAS
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
-	}
 }
 
 void AActionGASProjectCharacter::Tick(float DeltaSeconds)
