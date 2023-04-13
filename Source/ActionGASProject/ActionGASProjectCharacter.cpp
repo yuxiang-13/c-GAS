@@ -113,8 +113,6 @@ void AActionGASProjectCharacter::BeginPlay()
 void AActionGASProjectCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
-	
 }
 
 

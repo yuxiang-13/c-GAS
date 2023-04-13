@@ -15,8 +15,7 @@ class ACTIONGASPROJECT_API UAnimNotify_GameplayEvent : public UAnimNotify
 {
 	GENERATED_BODY()
 public:
-	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
-
+	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) override;
 protected:
 	// 触发的 GameplayEvent
 	UPROPERTY(EditAnywhere)

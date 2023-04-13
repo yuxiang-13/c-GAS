@@ -28,6 +28,7 @@ public class ActionGASProject : ModuleRules
 			"CommonInput", 
 			"ChaosVehicles",
 			"NetCore",
+			"Niagara",
 			"EnhancedInput"
 		});
 	}

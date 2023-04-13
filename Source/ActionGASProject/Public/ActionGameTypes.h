@@ -169,6 +169,10 @@ public:
 	// 基础伤害
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float BaseDamage;
+
+	// 音效
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class USoundBase* AttackSound;
 };
 
 

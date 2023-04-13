@@ -1,16 +1,22 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 
 #include "AnimNotifies/AnimNotify_GameplayEvent.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "ActionGASProject/ActionGASProjectCharacter.h"
+#include "Kismet/KismetSystemLibrary.h"
 
-void UAnimNotify_GameplayEvent::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
-                                       const FAnimNotifyEventReference& EventReference)
+void UAnimNotify_GameplayEvent::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
-	Super::Notify(MeshComp, Animation, EventReference);
+	Super::Notify(MeshComp, Animation);
 
-	// 发送GameplayEvent
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(MeshComp->GetOwner(), Payload.EventTag, Payload);
+	
+	check(MeshComp);
+
+	// 获取角色
+	if (AActionGASProjectCharacter* Character = Cast<AActionGASProjectCharacter>(MeshComp->GetOwner()))
+	{
+		// 发送GameplayEvent
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Character, Payload.EventTag, Payload);
+	}
 }

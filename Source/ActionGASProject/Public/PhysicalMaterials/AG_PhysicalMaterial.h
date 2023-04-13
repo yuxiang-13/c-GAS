@@ -17,4 +17,10 @@ public:
 	// 脚步声
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PhysicalMaterial")
 	class USoundBase* FootstepSound = nullptr;
+	// 子弹撞击声
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PhysicalMaterial")
+	class USoundBase* PointImpactSound = nullptr;
+	// 子弹撞击特效
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PhysicalMaterial")
+	class UNiagaraSystem* PointImpactVFX = nullptr;
 };

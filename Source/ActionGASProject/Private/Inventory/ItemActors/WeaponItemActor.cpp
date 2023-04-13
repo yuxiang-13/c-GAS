@@ -5,6 +5,9 @@
 
 #include "GameFramework/Character.h"
 #include "Inventory/InventoryItemInstance.h"
+#include "Kismet/GameplayStatics.h"
+#include "PhysicalMaterials/AG_PhysicalMaterial.h"
+#include "NiagaraFunctionLibrary.h"
 
 AWeaponItemActor::AWeaponItemActor()
 {
@@ -62,6 +65,58 @@ void AWeaponItemActor::InitInternal()
 			}
 		}
 	}
+}
 
-	
+
+void AWeaponItemActor::PlayWeaponEffects(const FHitResult& InHitResult)
+{
+	if (HasAuthority())
+	{
+		MulticastPlayWeaponEffects(InHitResult);
+	} else
+	{
+		PlayWeaponEffectsIternal(InHitResult);
+	}
+}
+
+void AWeaponItemActor::MulticastPlayWeaponEffects_Implementation(const FHitResult& InHitResult)
+{
+	// Owner是一个指向控制该Actor的Controller的引用，它通常用于在多人游戏中跟踪Actor的所有权以及与该Actor相关联的PlayerController。
+	// 代理一共三种：
+	/*
+	 * Authority、Simulated Proxy、Autonomous Proxy
+	*
+		If (HasAuthority){ //如果在服务端
+			// Authority存在于服务器
+		} 
+		else { //在客户端
+			// Autonomous Proxy表示自己客户端控制的角色
+			// Simulated Proxy 表示除了 自己客户的角色以外的 其他的角色在该客户端都是模拟的
+		} 
+	 */
+	if (!Owner || Owner->GetLocalRole() != ROLE_AutonomousProxy)
+	{
+		PlayWeaponEffectsIternal(InHitResult);
+	}
+}
+
+void AWeaponItemActor::PlayWeaponEffectsIternal(const FHitResult& InHitResult)
+{
+	// 根据碰撞物 物理材质生成音效
+	if (InHitResult.PhysMaterial.Get())
+	{
+		UAG_PhysicalMaterial* PhysicalMaterial = Cast<UAG_PhysicalMaterial>(InHitResult.PhysMaterial.Get());
+		if (PhysicalMaterial)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, PhysicalMaterial->PointImpactSound, InHitResult.ImpactPoint, 0.2f);
+
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, PhysicalMaterial->PointImpactVFX, InHitResult.ImpactPoint);
+		}
+
+		// 武器声
+		if (const UWeaponStaticData* weaponData = GetWeaponStaticData())
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, weaponData->AttackSound, GetActorLocation(), 0.2f);
+		}
+	}
 }
