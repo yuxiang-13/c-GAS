@@ -195,3 +195,46 @@ enum class EMovementDirectionType: uint8
 };
 
 
+// 榴弹
+UCLASS(BlueprintType, Blueprintable)
+class UProjectilesStaticData : public UObject
+{
+	GENERATED_BODY()
+public:
+	// 基础伤害
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float BaseDamage;
+	// 半径伤害
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float DamageRadius;
+	// 重力
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float GravityMultiplayer = 1.f;
+	// 初始速度
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float InitialSpeed = 3000.f;
+	// 最大速度
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float MaxSpeed = 3000.f;
+
+	
+	// 静态网格
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UStaticMesh* StaticMesh;
+	// 生效GE
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<TSubclassOf<UGameplayEffect>> Effects;
+	// 碰撞检测类型 用于球型爆炸查询
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<TEnumAsByte<EObjectTypeQuery>> RadialDamageQueryTypes;
+	// 普通直线检测
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TEnumAsByte<ETraceTypeQuery> RadialDamageTraceType;
+
+	// 爆炸特效
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UNiagaraSystem* OnStapVFX = nullptr;
+	// 爆炸声音
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class USoundBase* OnStopSFX = nullptr;
+};

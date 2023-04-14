@@ -26,6 +26,8 @@ FGameplayEffectSpecHandle UGA_InventoryCombatAbility::GetWeaponEffectSpec(const 
 			// 2 动态改变的属性值 GE.h中 属性 TMap<FGameplayTag, float> SetByCallerNameMagnitudes 这个 可以在 行时动态地修改属性值，是一个Map
 			// 我们只需要把   TMap->FGameplayTag  传导值 TMap->float： 就可以通过GE触发时候，给予属性改变
 			UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OueSpec, FGameplayTag::RequestGameplayTag(TEXT("Attribute.Health")), -WeaponStaticData->BaseDamage);
+
+			// 上面只是设置GE的参数，还需要手动激活 GE实例
 			return OueSpec;
 		}
 	}
