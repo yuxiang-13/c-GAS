@@ -6,6 +6,7 @@
 #include "AbilitySystemLog.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "GameplayEffectExtension.h"
 #include "InputTriggers.h"
 #include "Ability/Componts/AGAbilitySystemComponentBase.h"
 #include "AbilitySystem/AttributeSets/AG_AttributeSetBase.h"
@@ -99,6 +100,14 @@ AActionGASProjectCharacter::AActionGASProjectCharacter(const FObjectInitializer&
 	// 当客户端的属性值发生变化时，客户端会触发该回调函数，并向服务器发送属性值变化的通知。而服务器也会监听该回调函数，并更新游戏状态，然后将状态同步给所有的客户端。
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &AActionGASProjectCharacter::OnMaxMovementSpeedChanged);
 
+	// 监听血量变化
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &AActionGASProjectCharacter::OnHealthAttributeChanged);
+	// 监听布娃娃Event Tag
+	// AbilityComponent->RegisterGameplayTagEvent是在AbilityComponent上注册GameplayTag事件的一个函数。该函数可以用于监听GameplayTag的变化
+	FOnGameplayEffectTagCountChanged& GameplayEffectTagCountChanged = AbilitySystemComponent->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("State.Ragdoll"), EGameplayTagEventType::NewOrRemoved));
+	GameplayEffectTagCountChanged.AddUObject(this, &AActionGASProjectCharacter::OnRagdollStateTagChanged);
+	
+	
 	// 原视频也是放到character中了，实际上可以放到PlayerState中
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	// 开启组件复制，允许服务器创建actorcomponent后，这个组件能 自动复制到客户端
@@ -147,6 +156,55 @@ void AActionGASProjectCharacter::OnMaxMovementSpeedChanged(const FOnAttributeCha
 	GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
 
 	// UKismetSystemLibrary::PrintString(this,  FString::Printf(TEXT("-0000 - ->>>> %f"), 0.0f) , true, true, FLinearColor::Red, 10.f);
+}
+
+void AActionGASProjectCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	// 客户端血量为0 是，触发布娃娃Tag
+	if (Data.NewValue <= 0 && Data.OldValue > 0)
+	{
+		// 获取击杀我的那个人 的方法 (通过GE的配置上下文中的 源对象)
+		AActionGASProjectCharacter* OtherCharacter = nullptr;
+		
+		if (Data.GEModData)
+		{
+			const FGameplayEffectContextHandle& EffectContext = Data.GEModData->EffectSpec.GetEffectContext();
+			OtherCharacter = Cast<AActionGASProjectCharacter>(EffectContext.GetInstigator());
+		}
+
+		// 激活
+		FGameplayEventData EventPayload;
+		EventPayload.EventTag = ZeroHealthEventTag;
+
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, ZeroHealthEventTag, EventPayload);
+	}
+}
+
+void AActionGASProjectCharacter::OnRagdollStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	if (NewCount > 0)
+	{
+		StartRagdoll();
+	}
+}
+
+// 实施 布娃娃
+void AActionGASProjectCharacter::StartRagdoll()
+{
+	USkeletalMeshComponent* SkeletalMesh = GetMesh();
+	// 检测物理模拟
+	if (SkeletalMesh && !SkeletalMesh->IsSimulatingPhysics())
+	{
+		SkeletalMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+		SkeletalMesh->SetSimulatePhysics(true);
+		// 物理线速度 和 物理线速角速度 全部设为0
+		SkeletalMesh->SetAllPhysicsLinearVelocity(FVector::ZeroVector);
+		SkeletalMesh->SetAllPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+		// 唤醒刚体
+		SkeletalMesh->WakeAllRigidBodies();
+		// 关闭胶囊体碰撞
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
 
 void AActionGASProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)

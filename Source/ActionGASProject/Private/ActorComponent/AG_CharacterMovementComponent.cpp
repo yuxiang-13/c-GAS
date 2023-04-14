@@ -53,6 +53,19 @@ void UAG_CharacterMovementComponent::BeginPlay()
 	if (UAbilitySystemComponent* AbilityComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner()))
 	{
 		// AbilityComponent->RegisterGameplayTagEvent是在AbilityComponent上注册GameplayTag事件的一个函数。该函数可以用于监听GameplayTag的变化
+		/* 时间返回NewCount表示 绑定者自己身上 此标签 个数 0表示没有标签，就是标签被移除了
+		namespace EGameplayTagEventType
+		{
+		   enum Type
+		   {     
+			  // 添加或删除标记时应该执行回调,无论标记计数是否更改
+			  NewOrRemoved,
+
+			  // 标记计数发生变化时触发回调，无论添加还是删除标记
+			  AnyCountChange    
+		   };
+		}
+		*/
 		FOnGameplayEffectTagCountChanged& GameplayEffectTagCountChanged = AbilityComponent->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("Movemnt.Enforced.Strafe"), EGameplayTagEventType::NewOrRemoved));
 		GameplayEffectTagCountChanged.AddUObject(this, &UAG_CharacterMovementComponent::OnEnforcedStrafeTagChange);
 	}

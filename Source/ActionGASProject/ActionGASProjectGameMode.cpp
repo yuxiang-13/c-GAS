@@ -2,6 +2,7 @@
 
 #include "ActionGASProjectGameMode.h"
 #include "ActionGASProjectCharacter.h"
+#include "PlayerControllers/ActionGamePlayerController.h"
 #include "UObject/ConstructorHelpers.h"
 
 AActionGASProjectGameMode::AActionGASProjectGameMode()
@@ -11,5 +12,17 @@ AActionGASProjectGameMode::AActionGASProjectGameMode()
 	if (PlayerPawnBPClass.Class != NULL)
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
+	}
+
+	// 绑定PlayerControll
+	PlayerControllerClass = AActionGamePlayerController::StaticClass();
+}
+
+void AActionGASProjectGameMode::NotifyPlayerDied(AActionGamePlayerController* PlayerController)
+{
+	if (PlayerController)
+	{
+		// 倒计时后进行复活
+		PlayerController->RestartPlayerIn(2.f);
 	}
 }

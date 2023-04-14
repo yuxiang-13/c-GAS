@@ -6,6 +6,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "ActionGASProjectGameMode.generated.h"
 
+class AActionGamePlayerController;
+
 UCLASS(minimalapi)
 class AActionGASProjectGameMode : public AGameModeBase
 {
@@ -13,6 +15,9 @@ class AActionGASProjectGameMode : public AGameModeBase
 
 public:
 	AActionGASProjectGameMode();
+
+	// 倒计时后进行复活
+	void NotifyPlayerDied(AActionGamePlayerController* PlayerController);
 };
 
 

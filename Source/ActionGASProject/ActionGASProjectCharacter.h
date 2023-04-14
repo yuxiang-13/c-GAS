@@ -59,6 +59,10 @@ public:
 
 	// 绑定 Attribute属性变化
 	void OnMaxMovementSpeedChanged(const FOnAttributeChangeData& Data);
+	
+	
+	// 通过监听Health 监听布娃娃死亡
+	void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -77,7 +81,12 @@ public:
 
 	virtual void PawnClientRestart() override;
 
+	// 开始布娃娃
+	void StartRagdoll();
 protected:
+	UFUNCTION()
+	void OnRagdollStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+	
 	// 授予  ->  能力 GA
 	void GiveAbilities();
 	// 准备应用的GE列表
@@ -211,6 +220,14 @@ protected:
 	void OnAimActionStart(const FInputActionValue& Value);
 	void OnAimActionEnded(const FInputActionValue& Value);
 protected:
+	// 血量为0 Tag容器
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag ZeroHealthEventTag;
+	// 布娃娃激活tag
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag RagdollStateTag;
+
+	
 	// 瞄准GA 开始结束 Tag
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag AimStartedEventTag;
